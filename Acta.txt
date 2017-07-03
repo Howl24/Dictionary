@@ -3,40 +3,50 @@ Propósito del Proyecto:
     generación de diccionarios de palabras y similares.
 
 Actores principales e interesados:
-  - Juan Reyes    (A)
+  - Juan Reyes    (A, C)
   - Daniel Matos  (R)
-  - Facultades
+  - Facultades    (I)
+  - Jesus Luyo    (I)
 
 Requisitos básicos:
   Bow:
   - Las convocatorias se obtendrán a partir de un keyspace.
-  - Las convocatorias se obtendrán a partir de un rango de fechas (Mes y Año).
+  - Las convocatorias se obtendrán a partir de la fecha de ultima
+    actualizacion (Mes y Año). En caso sea un diccionario nuevo, sera desde la
+    fecha mas antigua.
   - Se permitirá seleccionar el listado de features de una convocatoria
-    utilizados para la obtencion de palabras.
+    utilizado para la obtencion de palabras.
   - Se permitirá ingresar el rango de n-gramas deseado para la generacion
     del diccionario.
   - Se permitirá seleccionar el nombre del diccionario a editar
     (Se crea uno nuevo si no se encuentra el nombre).
-  - Las palabras antiguas presentes en un diccionario a editar se consideran
-    stopwords.
-  - Se permitirá seleccionar un diccionario de stopwords.
+  - Se seleccionará un diccionario de stopwords relacionado al diccionario
+    a editar.
+  - Solo se seleccionarán las palabras que no esten presentes en ninguno de 
+    los dos diccionarios.
 
   Word2Vec:
   - Se entrenará un modelo word2vec utilizando todas las convocatorias
     de Symplicity.
+  - Se actualiza automaticamente cada mes.
+  - El modelo word2vec debe almacenarse en el disco.
   - Se utilizará el modelo entrenado para la agrupación de similares presentes
     en el diccionario inicial.
 
   Diccionario:
-  - Se mostrarán dos columnas (palabra - similar).
+  - Se mostrarán dos columnas (palabra - similar - Aceptado).
+  - La columna de Aceptado sera llenada por el usuario posteriormente.
   - El formato del archivo será csv.
+  - El nombre del archivo sera el nombre del diccionario
 
   Almacenamiento de Diccionario Editado:
   - Se definirá una estructura para el almacenamiento de los diccionarios.
   - Se leerán tres columnas (palabra - similar - Aceptado).
   - El formato del archivo será csv.
-  - Las palabras aceptadas ingresarán al diccionario a editar.
-  - Las palabras no aceptadas ingresarán al diccionario de stopwords.
+  - El nombre del archivo sera el nombre del diccionario
+  - Las palabras ingresarán al diccionario a editar indicando su estado.
+  - La particion sera la union entre el nombre del diccionario y el estado
+    (Aceptado - No Aceptado)
 
   No Funcionales:
   - Se utilizará la herramienta Git para el manejo de versiones, siguiendo
