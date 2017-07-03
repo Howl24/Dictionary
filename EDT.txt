@@ -1,0 +1,39 @@
+                                                    (horas)
+Gestion:                                            
+  - Plan Proyecto                                   (3)
+  - EDT                                             (1)
+  - Documentacion
+      - Descripcion Funcionalidades                 (2)
+      - Manual Usuario                              (3)
+
+  - Gestion Cambios                                 (0.5 por cambio)
+
+Desarrollo:
+  - Bow:                                              
+      - Interfaz                                    (2)
+      - Obtencion Convocatorias                     (2)
+      - Diseño Diccionario                          (2)
+      - Obtencion Diccionarios                      (1)
+
+  - Word2Vec:
+      - Entrenamiento                               (3)
+      - Agrupamiento                                (2)
+
+  - Impresion                                       (0.5)
+
+  - Almacenamiento:
+      - Estructura BD                               (3)
+      - Lectura Diccionario CSV                     (2)
+      - Almacenamiento Diccionario                  (2)
+
+  - Investigación                                   (2)
+
+
+Despliegue:
+  - Script BD                                       (0.5)
+  - Pruebas                                         (2)
+
+
+
+Total Horas: 33
+Colchon:     5?
