@@ -1,0 +1,53 @@
+Propósito del Proyecto:
+  - Elaborar un conjunto de funcionalidades que sirvan para facilitar la
+    generación de diccionarios de palabras y similares.
+
+Actores principales e interesados:
+  - Juan Reyes    (A)
+  - Daniel Matos  (R)
+  - Facultades
+
+Requisitos básicos:
+  Bow:
+  - Las convocatorias se obtendrán a partir de un keyspace.
+  - Las convocatorias se obtendrán a partir de un rango de fechas (Mes y Año).
+  - Se permitirá seleccionar el listado de features de una convocatoria
+    utilizados para la obtencion de palabras.
+  - Se permitirá ingresar el rango de n-gramas deseado para la generacion
+    del diccionario.
+  - Se permitirá seleccionar el nombre del diccionario a editar
+    (Se crea uno nuevo si no se encuentra el nombre).
+  - Las palabras antiguas presentes en un diccionario a editar se consideran
+    stopwords.
+  - Se permitirá seleccionar un diccionario de stopwords.
+
+  Word2Vec:
+  - Se entrenará un modelo word2vec utilizando todas las convocatorias
+    de Symplicity.
+  - Se utilizará el modelo entrenado para la agrupación de similares presentes
+    en el diccionario inicial.
+
+  Diccionario:
+  - Se mostrarán dos columnas (palabra - similar).
+  - El formato del archivo será csv.
+
+  Almacenamiento de Diccionario Editado:
+  - Se definirá una estructura para el almacenamiento de los diccionarios.
+  - Se leerán tres columnas (palabra - similar - Aceptado).
+  - El formato del archivo será csv.
+  - Las palabras aceptadas ingresarán al diccionario a editar.
+  - Las palabras no aceptadas ingresarán al diccionario de stopwords.
+
+  No Funcionales:
+  - Se utilizará la herramienta Git para el manejo de versiones, siguiendo
+    la guía: http://nvie.com/posts/a-successful-git-branching-model/
+
+  - Se utilizará la guía de estilos pep8.
+
+
+Riesgos identificados:
+  - Hardware posiblemente insuficiente para pruebas en la fase de desarrollo
+    (RAM).
+  - Proyecto elaborado en el período de Examenes Finales.
+  - Cantidad de datos posiblemente insuficiente para Word2Vec.
+  - La exactitud del diccionario depende de la persona designada a la edición.
