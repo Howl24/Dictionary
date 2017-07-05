@@ -1,32 +1,32 @@
                                                     (horas)
 Gestion:                                            
   - Plan Proyecto                                   (3)
-  - EDT                                             (1)
+  - EDT                                             (2)
   - Documentacion
       - Descripcion Funcionalidades                 (2)
       - Manual Usuario                              (3)
 
-  - Gestion Cambios                                 (0.5 por cambio)
+  - Reuniones                                       (5)
 
 Desarrollo:
   - Bow:                                              
-      - Interfaz                                    (2)
+      - Interfaz                                    (2.5)
       - Obtencion Convocatorias                     (2)
-      - Diseño Diccionario                          (2)
-      - Obtencion Diccionarios                      (1)
+      - Diseño Diccionario                          (4)
+      - Obtencion Diccionarios                      (1.5)
 
   - Word2Vec:
-      - Entrenamiento                               (3)
-      - Agrupamiento                                (2)
+      - Entrenamiento                               (4)
+      - Agrupamiento                                (3)
 
   - Impresion                                       (0.5)
 
   - Almacenamiento:
       - Estructura BD                               (3)
       - Lectura Diccionario CSV                     (2)
-      - Almacenamiento Diccionario                  (2)
+      - Almacenamiento Diccionario                  (3)
 
-  - Investigación                                   (2)
+  - Investigación                                   (4)
 
 
 Despliegue:
@@ -34,6 +34,6 @@ Despliegue:
   - Pruebas                                         (2)
 
 
+Total Horas: 42
 
-Total Horas: 33
-Colchon:     5?
+Fecha de Entrega: Lunes 17 9 a.m.
