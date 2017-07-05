@@ -56,6 +56,9 @@ Requisitos básicos:
   - Se utilizará la herramienta Git para el manejo de versiones, siguiendo
     la guía: http://nvie.com/posts/a-successful-git-branching-model/
 
+  - Se utilizará la guia de estructura de proyecto en python:
+    http://python-guide-pt-br.readthedocs.io/en/latest/writing/structure/
+
   - Se utilizará la guía de estilos pep8.
 
 Requisitos deseables:
