@@ -10,12 +10,13 @@ Actores principales e interesados:
 
 Requisitos básicos:
   Bow:
-  - Las convocatorias se obtendrán a partir de un keyspace.
+  - Las convocatorias se obtendrán a partir de un listado de keyspace.
   - Las convocatorias se obtendrán a partir de la fecha de ultima
     actualizacion (Mes y Año). En caso sea un diccionario nuevo, sera desde la
     fecha mas antigua.
   - Se permitirá seleccionar el listado de features de una convocatoria
     utilizado para la obtencion de palabras.
+  - Se considerará un documento por feature presente en la convocatoria.
   - Se permitirá ingresar el rango de n-gramas deseado para la generacion
     del diccionario.
   - Se permitirá seleccionar el nombre del diccionario a editar
@@ -24,14 +25,17 @@ Requisitos básicos:
     a editar.
   - Solo se seleccionarán las palabras que no esten presentes en ninguno de 
     los dos diccionarios.
+  - La palabra representativa será de Symplicity a menos que sea una palabra
+    que no tenga similar en Symplicity.
 
   Word2Vec:
   - Se entrenará un modelo word2vec utilizando todas las convocatorias
-    de Symplicity.
+    presentes en un listado de keyspaces de un archivo de configuracion*
   - Se actualiza automaticamente cada mes.
   - El modelo word2vec debe almacenarse en el disco.
   - Se utilizará el modelo entrenado para la agrupación de similares presentes
     en el diccionario inicial.
+
 
   Diccionario:
   - Se mostrarán dos columnas (palabra - similar - Aceptado).
@@ -53,6 +57,9 @@ Requisitos básicos:
     la guía: http://nvie.com/posts/a-successful-git-branching-model/
 
   - Se utilizará la guía de estilos pep8.
+
+Requisitos deseables:
+  - Dividir los features por contextos.
 
 
 Riesgos identificados:

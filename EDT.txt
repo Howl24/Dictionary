@@ -10,8 +10,8 @@ Gestion:
 
 Desarrollo:
   - Bow:                                              
-      - Interfaz                                    (2.5)
-      - Obtencion Convocatorias                     (2)
+      - Interfaz                                    (3)
+      - Obtencion Convocatorias                     (2.5)
       - Diseño Diccionario                          (4)
       - Obtencion Diccionarios                      (1.5)
 
@@ -26,7 +26,7 @@ Desarrollo:
       - Lectura Diccionario CSV                     (2)
       - Almacenamiento Diccionario                  (3)
 
-  - Investigación                                   (4)
+  - Investigación                                   (5)
 
 
 Despliegue:
@@ -34,6 +34,7 @@ Despliegue:
   - Pruebas                                         (2)
 
 
-Total Horas: 42
+Total Horas: 44
 
+Reuniones Diarias a las 12:00 m.
 Fecha de Entrega: Lunes 17 9 a.m.
