@@ -1,0 +1,70 @@
+Propósito del Proyecto:
+  - Elaborar un conjunto de funcionalidades que sirvan para facilitar la
+    generación de diccionarios de palabras y similares.
+
+Actores principales e interesados:
+  - Juan Reyes    (A, C)
+  - Daniel Matos  (R)
+  - Facultades    (I)
+  - Jesus Luyo    (I)
+
+Requisitos básicos:
+  Bow:
+  - Las convocatorias se obtendrán a partir de un listado de keyspace.
+  - Las convocatorias se obtendrán a partir de la fecha de ultima
+    actualizacion (Mes y Año). En caso sea un diccionario nuevo, sera desde la
+    fecha mas antigua.
+  - Se permitirá seleccionar el listado de features de una convocatoria
+    utilizado para la obtencion de palabras.
+  - Se considerará un documento por feature presente en la convocatoria.
+  - Se permitirá ingresar el rango de n-gramas deseado para la generacion
+    del diccionario.
+  - Se permitirá seleccionar el nombre del diccionario a editar
+    (Se crea uno nuevo si no se encuentra el nombre).
+  - Se seleccionará un diccionario de stopwords relacionado al diccionario
+    a editar.
+  - Solo se seleccionarán las palabras que no esten presentes en ninguno de 
+    los dos diccionarios.
+  - La palabra representativa será de Symplicity a menos que sea una palabra
+    que no tenga similar en Symplicity.
+
+  Word2Vec:
+  - Se entrenará un modelo word2vec utilizando todas las convocatorias
+    presentes en un listado de keyspaces de un archivo de configuracion*
+  - Se actualiza automaticamente cada mes.
+  - El modelo word2vec debe almacenarse en el disco.
+  - Se utilizará el modelo entrenado para la agrupación de similares presentes
+    en el diccionario inicial.
+
+
+  Diccionario:
+  - Se mostrarán dos columnas (palabra - similar - Aceptado).
+  - La columna de Aceptado sera llenada por el usuario posteriormente.
+  - El formato del archivo será csv.
+  - El nombre del archivo sera el nombre del diccionario
+
+  Almacenamiento de Diccionario Editado:
+  - Se definirá una estructura para el almacenamiento de los diccionarios.
+  - Se leerán tres columnas (palabra - similar - Aceptado).
+  - El formato del archivo será csv.
+  - El nombre del archivo sera el nombre del diccionario
+  - Las palabras ingresarán al diccionario a editar indicando su estado.
+  - La particion sera la union entre el nombre del diccionario y el estado
+    (Aceptado - No Aceptado)
+
+  No Funcionales:
+  - Se utilizará la herramienta Git para el manejo de versiones, siguiendo
+    la guía: http://nvie.com/posts/a-successful-git-branching-model/
+
+  - Se utilizará la guía de estilos pep8.
+
+Requisitos deseables:
+  - Dividir los features por contextos.
+
+
+Riesgos identificados:
+  - Hardware posiblemente insuficiente para pruebas en la fase de desarrollo
+    (RAM).
+  - Proyecto elaborado en el período de Examenes Finales.
+  - Cantidad de datos posiblemente insuficiente para Word2Vec.
+  - La exactitud del diccionario depende de la persona designada a la edición.

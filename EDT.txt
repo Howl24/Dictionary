@@ -1,0 +1,40 @@
+                                                    (horas)
+Gestion:                                            
+  - Plan Proyecto                                   (3)
+  - EDT                                             (2)
+  - Documentacion
+      - Descripcion Funcionalidades                 (2)
+      - Manual Usuario                              (3)
+
+  - Reuniones                                       (5)
+
+Desarrollo:
+  - Bow:                                              
+      - Interfaz                                    (3)
+      - Obtencion Convocatorias                     (2.5)
+      - Diseño Diccionario                          (4)
+      - Obtencion Diccionarios                      (1.5)
+
+  - Word2Vec:
+      - Entrenamiento                               (4)
+      - Agrupamiento                                (3)
+
+  - Impresion                                       (0.5)
+
+  - Almacenamiento:
+      - Estructura BD                               (3)
+      - Lectura Diccionario CSV                     (2)
+      - Almacenamiento Diccionario                  (3)
+
+  - Investigación                                   (5)
+
+
+Despliegue:
+  - Script BD                                       (0.5)
+  - Pruebas                                         (2)
+
+
+Total Horas: 44
+
+Reuniones Diarias a las 12:00 m.
+Fecha de Entrega: Lunes 17 9 a.m.
