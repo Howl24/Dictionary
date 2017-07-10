@@ -1,0 +1,14 @@
+Dictionary Database Structure:
+
+Fields:
+  - State         ->  Boolean       (Phrase - StopWord)
+  - Name          ->  String        (Dictionary Name)
+  - Phrase        ->  String        
+  - Similars      ->  Set<String>
+
+- Primary Key:
+  - Partition
+    Compound Partition Key: (State, Name)
+
+  - Clustering
+    One Cluster Key: (Phrase)
