@@ -1,0 +1,96 @@
+from cassandra.cluster import NoHostAvailable
+from cassandra import InvalidRequest
+import dictionary
+
+
+class Offer:
+    session = None
+    keyspace = ""
+    offers_table = "new_offers"
+    select_stmt = None
+    select_all_stmt = None
+
+    def __init__(self, year=0, month=0, id="",
+                 features={}, careers=set(), skills={}):
+        self.year = year
+        self.month = month
+        self.id = id
+        self.features = features
+        self.careers = careers
+        self.skills = skills
+
+    @classmethod
+    def ConnectToDatabase(cls, cluster):
+        try:
+            cls.session = cluster.connect(cls.keyspace)
+        except NoHostAvailable as e:
+            print("Ningun servicio de cassandra esta disponible.")
+            print("Inicie un servicio con el comando " +
+                  "\"sudo cassandra -R \"")
+            print()
+            return dictionary.UNSUCCESSFUL_OPERATION
+
+        return dictionary.SUCCESSFUL_OPERATION
+
+    @classmethod
+    def SetKeyspace(cls, keyspace):
+        cls.keyspace = keyspace
+        cls.session.set_keyspace(cls.keyspace)
+
+    @classmethod
+    def BuildPreparedStatements(cls, keyspace=None):
+        if keyspace:
+            cls.SetKeyspace(keyspace)
+
+        cmd_select = """
+                     SELECT * FROM {0} WHERE
+                     year = ? AND
+                     month = ? AND
+                     id = ?;
+                     """.format(cls.offers_table)
+
+        cmd_select_all = """
+                         SELECT * FROM {0}
+                         """.format(cls.offers_table)
+
+        try:
+            cls.select_stmt = cls.session.prepare(cmd_select)
+            cls.select_all_stmt = cls.session.prepare(cmd_select_all)
+        except InvalidRequest:
+            print("Tabla no configurada")
+            print()
+            return dictionary.UNSUCCESSFUL_OPERATION
+
+        return dictionary.SUCCESSFUL_OPERATION
+
+    @classmethod
+    def Select(cls, year, month, id):
+        rows = cls.session.execute(cls.select_stmt,
+                                   (year, month, id))
+
+        if not rows:
+            return None
+        else:
+            return Offer.ByCassandraRow(rows[0])
+
+    @classmethod
+    def ByCassandraRow(cls, row):
+        return cls(row.year, row.month, row.id, row.careers, row.features)
+
+    @classmethod
+    def SelectAll(cls, keyspace):
+        rows = cls.session.execute(cls.select_all_stmt)
+
+        if not rows:
+            return None
+        else:
+            return cls.ByCassandraRows(rows)
+
+    @classmethod
+    def ByCassandraRows(cls, rows):
+        offers = []
+        for row in rows:
+            offer = cls(row.year, row.month, row.id, row.features, row.careers)
+            offers.append(offer)
+
+        return offers
