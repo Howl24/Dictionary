@@ -1,14 +1,14 @@
 Dictionary Database Structure:
 
 Fields:
-  - State         ->  Boolean       (Phrase - StopWord)
-  - Name          ->  String        (Dictionary Name)
-  - Phrase        ->  String        
-  - Similars      ->  Set<String>
+  - state         ->  Boolean       (Phrase - StopWord)
+  - name          ->  String        (Dictionary Name)
+  - phrase        ->  String
+  - similars      ->  Set<String>
 
 - Primary Key:
   - Partition
-    Compound Partition Key: (State, Name)
+    Compound Partition Key: (state, name)
 
   - Clustering
-    One Cluster Key: (Phrase)
+    One Cluster Key: (phrase)
