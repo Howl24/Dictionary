@@ -1,4 +1,5 @@
 from cassandra.cluster import NoHostAvailable
+from dictionary import Phrase
 import dictionary
 
 
@@ -89,13 +90,18 @@ class Dictionary:
         return dictionary.SUCCESFUL_OPERATION
 
     @classmethod
-    def Select(cls, dictionary_name, state=True):
-        rows = cls.session.execute(cls.select_stmt, (state, dictionary_name))
-        if not rows:
+    def Select(cls, dictionary_name):
+        acc_rows = cls.session.execute(cls.select_stmt,
+                                       (True, dictionary_name))
+        rej_rows = cls.session.execute(cls.select_stmt,
+                                       (False, dictionary_name))
+
+        if not acc_rows and not rej_rows:
             return None
         else:
-            pass
-            #return Dictionary.ByCassandraRows(rows)
+            return Dictionary.ByCassandraRows(dictionary_name,
+                                              acc_rows,
+                                              rej_rows)
 
     @classmethod
     def New(cls, dictionary_name):
@@ -104,5 +110,14 @@ class Dictionary:
         rejected_phrases = []
         return cls(name, accepted_phrases, rejected_phrases)
 
+    @classmethod
+    def ByCassandraRows(cls, dictionary_name, acc_rows, rej_rows):
+        name = dictionary_name
+        accepted_phrases = Phrase.ByCassandraRows(acc_rows)
+        rejected_phrases = Phrase.ByCassandraRows(rej_rows)
+        return cls(name, accepted_phrases, rejected_phrases)
+
     def print(self):
         print("Dictionary Name: " + self.name)
+        for phrase in self.accepted_phrases:
+            phrase.print()
