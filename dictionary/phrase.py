@@ -9,7 +9,7 @@ class Phrase:
     def ByCassandraRows(cls, rows):
         phrases = []
         for row in rows:
-            phrase = Phrase(row.state, row.phrase, row.similars)
+            phrase = cls(row.state, row.phrase, row.similars)
             phrases.append(phrase)
 
         return phrases

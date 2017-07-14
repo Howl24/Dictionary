@@ -45,6 +45,8 @@ def read_list(msg):
         else:
             responses.append(response)
 
+    return responses
+
 
 def read_keyspaces():
     msg = "Indique los keyspaces a partir " + \
