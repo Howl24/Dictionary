@@ -1,1 +1,3 @@
-yes_responses = ['Y', 'S']
+YES_RESPONSES = ['Y', 'S']
+SUCCESFUL_OPERATION = True
+UNSUCCESFUL_OPERATION = False
