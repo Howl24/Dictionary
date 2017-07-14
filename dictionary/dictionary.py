@@ -1,4 +1,5 @@
 from cassandra.cluster import NoHostAvailable
+from cassandra import InvalidRequest
 from dictionary import Phrase
 import dictionary
 
@@ -29,9 +30,9 @@ class Dictionary:
             print("Inicie un servicio con el comando " +
                   "\"sudo cassandra -R\"")
             print()
-            return dictionary.UNSUCCESFUL_OPERATION
+            return dictionary.UNSUCCESSFUL_OPERATION
 
-        return dictionary.SUCCESFUL_OPERATION
+        return dictionary.SUCCESSFUL_OPERATION
 
     # Pre:
     #   - Class session instance
@@ -46,7 +47,6 @@ class Dictionary:
                      (?, ?, ?, ?);
                      """.format(cls.table_name)
 
-        cls.insert_stmt = cls.session.prepare(cmd_insert)
 
         cmd_select = """
                      SELECT * FROM {0} WHERE
@@ -54,7 +54,6 @@ class Dictionary:
                      name = ?;
                      """.format(cls.table_name)
 
-        cls.select_stmt = cls.session.prepare(cmd_select)
 
         cmd_delete = """
                      DELETE FROM {0} WHERE
@@ -62,7 +61,18 @@ class Dictionary:
                      name = ?;
                      """.format(cls.table_name)
 
-        cls.delete_stmt = cls.session.prepare(cmd_delete)
+        try:
+            cls.insert_stmt = cls.session.prepare(cmd_insert)
+            cls.select_stmt = cls.session.prepare(cmd_select)
+            cls.delete_stmt = cls.session.prepare(cmd_delete)
+        except InvalidRequest:
+            print("Tabla no configurada.")
+            print("Utilice la funcion CreateTable para crear una tabla")
+            print()
+            return dictionary.UNSUCCESSFUL_OPERATION
+
+        return dictionary.SUCCESSFUL_OPERATION
+
 
     # Pre:
     #   - Class session instancej
@@ -84,10 +94,10 @@ class Dictionary:
         except:
             # print("No se pudo crear la tabla de diccionarios")
             # print(Exception.errors)
-            return dictionary.UNSUCCESFUL_OPERATION
+            return dictionary.UNSUCCESSFUL_OPERATION
 
         print("La tabla de diccionarios se creó correctamente")
-        return dictionary.SUCCESFUL_OPERATION
+        return dictionary.SUCCESSFUL_OPERATION
 
     @classmethod
     def Select(cls, dictionary_name):
