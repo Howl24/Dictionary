@@ -2,7 +2,7 @@ import dictionary
 from dictionary import Dictionary
 
 
-def read_string(message):
+def read_string(message=""):
     response = input(message)
     return response
 
@@ -30,4 +30,44 @@ def read_dictionary():
         if response is True:
             dictionary = Dictionary.New(dictionary_name)
 
+    print()
     return dictionary
+
+
+def read_list(msg):
+    print(msg)
+    responses = []
+    keep_reading = True
+    while(keep_reading):
+        response = read_string()
+        if not response:
+            keep_reading = False
+        else:
+            responses.append(response)
+
+
+def read_keyspaces():
+    msg = "Indique los keyspaces a partir " + \
+          "de los cuales desea construir el diccionario"
+
+    return read_list(msg)
+
+
+def read_features():
+    msg = "Indique los features a partir " + \
+          "de los cuales se desea obtener el diccionario"
+
+    return read_list(msg)
+
+
+def read_ngrams():
+    msg = "Indique el numero mínimo y máximo de n-gramas a obtener"
+    print(msg)
+
+    msg = "Mínimo: "
+    min_ngram = read_int(msg)
+
+    msg = "Máximo: "
+    max_ngram = read_int(msg)
+
+    return min_ngram, max_ngram

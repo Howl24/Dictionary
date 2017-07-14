@@ -1,14 +1,18 @@
-from dictionary import read_dictionary
+from dictionary import interface
+from dictionary import init_fail
 
 def main():
-    dictionary = read_dictionary()
+    # Find something better!
+    if init_fail:
+        return
+
+    dictionary = interface.read_dictionary()
     if dictionary is None:
         return 
 
-    dictionary.print()
-    #keyspaces = read_keyspaces()
-    #feature_list = read_feature_list()
-    #ngrams = read_ngrams()
+    keyspaces = interface.read_keyspaces()
+    feature_list = interface.read_features()
+    ngrams = interface.read_ngrams()
     #documents = get_documents(keyspaces, feature_list)
     #phrases = get_phrases(documents, dictionary)
     #word2vec = get_word2vec()
