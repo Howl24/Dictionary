@@ -131,3 +131,13 @@ class Dictionary:
         print("Dictionary Name: " + self.name)
         for phrase in self.accepted_phrases:
             phrase.print()
+
+    def all_phrases(self):
+        phrases = []
+        for phrase in self.accepted_phrases:
+            phrases.append(phrase.phrase)
+
+        for phrase in self.rejected_phrases:
+            phrases.append(phrase.phrase)
+
+        return phrases

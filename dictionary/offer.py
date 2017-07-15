@@ -35,12 +35,20 @@ class Offer:
     @classmethod
     def SetKeyspace(cls, keyspace):
         cls.keyspace = keyspace
-        cls.session.set_keyspace(cls.keyspace)
+        try:
+            cls.session.set_keyspace(cls.keyspace)
+        except InvalidRequest:
+            print("El keyspace no existe")
+            print()
+            return dictionary.UNSUCCESSFUL_OPERATION
+
+        return dictionary.SUCCESSFUL_OPERATION
 
     @classmethod
     def BuildPreparedStatements(cls, keyspace=None):
         if keyspace:
-            cls.SetKeyspace(keyspace)
+            if cls.SetKeyspace(keyspace) == dictionary.UNSUCCESSFUL_OPERATION:
+                return dictionary.UNSUCCESSFUL_OPERATION
 
         cmd_select = """
                      SELECT * FROM {0} WHERE

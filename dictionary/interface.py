@@ -21,6 +21,14 @@ def read_int(message, error_value=None):
         return error_value
 
 
+def read_double(message, error_value=None):
+    response = input(message)
+    try:
+        return float(response)
+    except ValueError:
+        return error_value
+
+
 def read_dictionary():
     dictionary_name = read_string("Ingrese el nombre del diccionario: ")
     dictionary = Dictionary.Select(dictionary_name)
@@ -73,3 +81,15 @@ def read_ngrams():
     max_ngram = read_int(msg)
 
     return min_ngram, max_ngram
+
+def read_dfs():
+    msg = "Indique los limites mínimo y máximo de frecuencias por palabra"
+    print(msg)
+
+    msg = "DF Mínimo: "
+    min_df = read_double(msg)
+
+    msg = "DF Máximo: "
+    max_df = read_double(msg)
+
+    return min_df, max_df
