@@ -1,7 +1,12 @@
 from dictionary import interface
 from dictionary import init_fail
 from dictionary import Offer
+from dictionary import Document
+from dictionary import Phrase
 from sklearn.feature_extraction.text import CountVectorizer
+from dictionary import stop_spanish
+import gensim
+import numpy
 
 
 def get_documents(keyspaces, feature_list):
@@ -11,19 +16,20 @@ def get_documents(keyspaces, feature_list):
         if not Offer.BuildPreparedStatements(keyspace):
             return None
         offers = Offer.SelectAll(keyspace)
+
         for offer in offers:
-            document = ""
+            text = ""
             for feature in feature_list:
                 if feature in offer.features:
-                    document += offer.features[feature] + ' '
+                    text += offer.features[feature] + ' '
 
-            documents.append(document)
+            documents.append(Document(text,keyspace))
                 
     return documents
 
 
 def get_phrases(documents, ngrams, dfs, dictionary):
-    stopwords = dictionary.all_phrases()
+    stopwords = dictionary.all_phrases() + stop_spanish
     min_ngrams = ngrams[0]
     max_ngrams = ngrams[1]
 
@@ -34,12 +40,52 @@ def get_phrases(documents, ngrams, dfs, dictionary):
                                      ngram_range=(min_ngrams, max_ngrams),
                                      max_df = max_df, min_df = min_df,
                                      )
+    texts = []
+    for doc in documents:
+        txt = doc.process_text()
+        texts.append(txt)
 
-    cnt_vectorizer.fit(documents)
-    feature_names = cnt_vectorizer.get_feature_names()
-    print(feature_names)
-    print(len(feature_names))
+    terms_matrix = cnt_vectorizer.fit_transform(texts)
+    terms_per_document = cnt_vectorizer.inverse_transform(terms_matrix)
 
+    phrases = get_comparable_phrases(terms_per_document, documents)
+    return phrases
+
+
+def get_comparable_phrases(terms_per_document, documents):
+    phrases = {}
+    for idx, doc in enumerate(terms_per_document):
+        for term in doc:
+            if term not in phrases:
+                #Initialize a 2 lenght list [cnt, source]
+                phrases[term] = [0, documents[idx].source]
+
+            # Increase cnt
+            phrases[term][0] += 1
+
+    print(len(phrases))
+
+    # Build model phrases
+    comparable_phrases = []
+    for phrase, values in phrases.items():
+        comp_phrase = Phrase(None, phrase, [], values[0], values[1])
+        comparable_phrases.append(comp_phrase)
+
+    return comparable_phrases
+
+
+def get_word2vec():
+    model = gensim.models.Word2Vec.load('w2v/model')
+    print(model.most_similar(positive=['excel']))
+    return model
+    
+def get_similars(phrases, model):
+    phrases.sort()
+
+    for idx, phrase in enumerate(phrases):
+        for next_phrase in phrases[idx:]:
+            if model.wv.similarity(phrase.phrase, next_phrase.phrase) > 0.9:
+                phrase.add_similar(next_phrase)
 
 def main():
     # Find something better!
@@ -49,7 +95,7 @@ def main():
     dictionary = interface.read_dictionary()
     if dictionary is None:
         return 
-
+    
     # keyspaces = interface.read_keyspaces()
     keyspaces = ['new_btpucp']
 
@@ -63,13 +109,12 @@ def main():
     dfs = (0.1,0.9)
 
     documents = get_documents(keyspaces, feature_list)
-    if documents is None:
-        return
 
     phrases = get_phrases(documents, ngrams, dfs, dictionary)
-    #word2vec = get_word2vec()
 
-    #similars = get_similars(phrases, word2vec)
+    model = get_word2vec()
+
+    similars = get_similars(phrases, model)
     #print_similars()
 
 
