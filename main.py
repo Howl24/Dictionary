@@ -151,7 +151,8 @@ def load_file(dictionary):
                 response = False
 
             if phrase not in phrases:
-                new_phrase = Phrase(response, phrase, [similar], 0, "new_btpucp")
+                new_phrase = Phrase(response, phrase, [similar], 0,
+                                    "new_btpucp")
                 phrases[phrase] = new_phrase
             else:
                 phrases[phrase].add_similar(similar)
@@ -162,8 +163,11 @@ def load_file(dictionary):
 
 def create_bow(interface):
     dic = interface.read_dictionary()
-    if not isinstance(dic, Dictionary):
+    if not dic:
         return
+
+    if not dic.sources:
+        interface.read_configuration(dic)
 
 
 def save_bow(interface):
@@ -171,7 +175,9 @@ def save_bow(interface):
 
 
 def main():
-    sys.stderr = open('foo.err', 'w')
+    file = open('foo.err', 'w')
+    sys.stdout = file
+    sys.stderr = file
 
     Dictionary.PrepareStatements()
     interface = Interface()
@@ -186,15 +192,6 @@ def main():
             save_bow(interface)
 
     return
-    # dictionary = None
-    # while(dictionary is None):
-    #    dictionary = interface.read_dictionary()
-
-    # return
-
-    # dictionary = dictionary.interface.read_dictionary()
-    # if dictionary is None:
-    #     return
 
     # response = ask_load_data()
     # if response is True:

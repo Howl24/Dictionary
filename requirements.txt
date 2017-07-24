@@ -9,3 +9,4 @@ sklearn==0.0
 wheel==0.29.0
 gensim
 nltk
+pick

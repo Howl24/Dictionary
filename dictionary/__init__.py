@@ -12,6 +12,7 @@ cluster = Cluster()
 
 try:
     Dictionary.ConnectToDatabase(cluster)
+    Offer.ConnectToDatabase(cluster)
 except NoHostAvailable:
     print("Ningun servicio de cassandra esta disponible.")
     print("Inicie un servicio con el comando " +

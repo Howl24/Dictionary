@@ -42,10 +42,11 @@ class Offer:
             print()
             return dictionary.UNSUCCESSFUL_OPERATION
 
+        cls.PrepareStatements()
         return dictionary.SUCCESSFUL_OPERATION
 
     @classmethod
-    def BuildPreparedStatements(cls, keyspace=None):
+    def PrepareStatements(cls, keyspace=None):
         if keyspace:
             if cls.SetKeyspace(keyspace) == dictionary.UNSUCCESSFUL_OPERATION:
                 return dictionary.UNSUCCESSFUL_OPERATION
@@ -66,7 +67,7 @@ class Offer:
             cls.select_all_stmt = cls.session.prepare(cmd_select_all)
         except InvalidRequest:
             print("Tabla no configurada")
-            print()
+            raise
             return dictionary.UNSUCCESSFUL_OPERATION
 
         return dictionary.SUCCESSFUL_OPERATION
@@ -87,6 +88,7 @@ class Offer:
 
     @classmethod
     def SelectAll(cls, keyspace):
+        cls.SetKeyspace(keyspace)
         rows = cls.session.execute(cls.select_all_stmt)
 
         if not rows:
