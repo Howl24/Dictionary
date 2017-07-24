@@ -25,21 +25,15 @@ class Dictionary:
     def ConnectToDatabase(cls, cluster):
         try:
             cls.session = cluster.connect(cls.keyspace)
-        except NoHostAvailable as e:
-            print("Ningun servicio de cassandra esta disponible.")
-            print("Inicie un servicio con el comando " +
-                  "\"sudo cassandra -R\"")
-            print()
-            return dictionary.UNSUCCESSFUL_OPERATION
-
-        return dictionary.SUCCESSFUL_OPERATION
+        except NoHostAvailable:
+            raise
 
     # Pre:
     #   - Class session instance
     # Post:
     #   - Class PreparedStatements instantiated
     @classmethod
-    def BuildPreparedStatements(cls):
+    def PrepareStatements(cls):
         cmd_insert = """
                      INSERT INTO {0}
                      (state, name, phrase, similars)
@@ -101,6 +95,7 @@ class Dictionary:
 
     @classmethod
     def Select(cls, dictionary_name):
+        """Return a dictionary from database"""
         acc_rows = cls.session.execute(cls.select_stmt,
                                        (True, dictionary_name))
         rej_rows = cls.session.execute(cls.select_stmt,
@@ -131,6 +126,12 @@ class Dictionary:
         print("Dictionary Name: " + self.name)
         for phrase in self.accepted_phrases:
             phrase.print()
+
+
+    def insert_phrase(self, phrase):
+        self.session.execute(self.insert_stmt,
+                            (phrase.state, self.name,
+                            phrase.phrase, phrase.similars))
 
     def all_phrases(self):
         phrases = []

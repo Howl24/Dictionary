@@ -1,95 +1,132 @@
-import dictionary
 from dictionary import Dictionary
+import curses
+from pick import pick
+from dictionary import YES
+from dictionary import NO
 
 
-def read_string(message=""):
-    response = input(message)
-    return response
+class Interface:
+    def __init__(self):
+        self.stdscr = curses.initscr()
 
+    def __del__(self):
+        self.stdscr.getkey()
+        curses.endwin()
 
-def read_boolean(message):
-    boolean_message = message + " (S/N)"
-    response = input(boolean_message)
-    return response in dictionary.YES_RESPONSES
+    def read_string(self, msg):
+        self.stdscr.addstr(1, 1, msg)
+        response = self.stdscr.getstr().decode("utf-8")
+        self.stdscr.clear()
+        return response
 
+    def read_boolean(self, msg):
+        options = [YES, NO]
+        option, index = pick(options, msg)
+        self.stdscr.clear()
+        return option == YES
 
-def read_int(message, error_value=None):
-    response = input(message)
-    try:
-        return int(response)
-    except ValueError:
-        return error_value
-
-
-def read_double(message, error_value=None):
-    response = input(message)
-    try:
-        return float(response)
-    except ValueError:
-        return error_value
-
-
-def read_dictionary():
-    dictionary_name = read_string("Ingrese el nombre del diccionario: ")
-    dictionary = Dictionary.Select(dictionary_name)
-    if dictionary is None:
-        print("El diccionario ingresado no existe")
-        response = read_boolean("Desea crear un diccionario nuevo?")
-        if response is True:
-            dictionary = Dictionary.New(dictionary_name)
-
-    print()
-    return dictionary
-
-
-def read_list(msg):
-    print(msg)
-    responses = []
-    keep_reading = True
-    while(keep_reading):
-        response = read_string()
-        if not response:
-            keep_reading = False
+    def read_dictionary(self):
+        dictionary_name = self.read_string("Ingrese el nombre del diccionario: ")
+        dictionary = Dictionary.Select(dictionary_name)
+        if dictionary is None:
+            msg = "El diccionario ingresado no existe.\n" + \
+                  "Desea crear uno nuevo?"
+            response = self.read_boolean(msg)
+            if response is YES:
+                dictionary = Dictionary.New(dictionary_name)
         else:
-            responses.append(response)
+            self.stdscr.addstr(1, 1, "Diccionario encontrado!")
 
-    return responses
+        return dictionary
 
-
-def read_keyspaces():
-    msg = "Indique los keyspaces a partir " + \
-          "de los cuales desea construir el diccionario"
-
-    return read_list(msg)
-
-
-def read_features():
-    msg = "Indique los features a partir " + \
-          "de los cuales se desea obtener el diccionario"
-
-    return read_list(msg)
-
-
-def read_ngrams():
-    msg = "Indique el numero mínimo y máximo de n-gramas a obtener"
-    print(msg)
-
-    msg = "Mínimo: "
-    min_ngram = read_int(msg)
-
-    msg = "Máximo: "
-    max_ngram = read_int(msg)
-
-    return min_ngram, max_ngram
-
-def read_dfs():
-    msg = "Indique los limites mínimo y máximo de frecuencias por palabra"
-    print(msg)
-
-    msg = "DF Mínimo: "
-    min_df = read_double(msg)
-
-    msg = "DF Máximo: "
-    max_df = read_double(msg)
-
-    return min_df, max_df
+# def read_string(message=""):
+#    response = input(message)
+#    return response
+#
+#
+# def read_boolean(message):
+#    boolean_message = message + " (S/N)"
+#    response = input(boolean_message)
+#    return response in dictionary.YES_RESPONSES
+#
+#
+# def read_int(message, error_value=None):
+#    response = input(message)
+#    try:
+#        return int(response)
+#    except ValueError:
+#        return error_value
+#
+#
+# def read_double(message, error_value=None):
+#    response = input(message)
+#    try:
+#        return float(response)
+#    except ValueError:
+#        return error_value
+#
+#
+# def read_dictionary():
+#    dictionary_name = read_string("Ingrese el nombre del diccionario: ")
+#    dictionary = Dictionary.Select(dictionary_name)
+#    if dictionary is None:
+#        print("El diccionario ingresado no existe")
+#        response = read_boolean("Desea crear un diccionario nuevo?")
+#        if response is True:
+#            dictionary = Dictionary.New(dictionary_name)
+#
+#    print()
+#    return dictionary
+#
+#
+# def read_list(msg):
+#    print(msg)
+#    responses = []
+#    keep_reading = True
+#    while(keep_reading):
+#        response = read_string()
+#        if not response:
+#            keep_reading = False
+#        else:
+#            responses.append(response)
+#
+#    return responses
+#
+#
+# def read_keyspaces():
+#    msg = "Indique los keyspaces a partir " + \
+#          "de los cuales desea construir el diccionario"
+#
+#    return read_list(msg)
+#
+#
+# def read_features():
+#    msg = "Indique los features a partir " + \
+#          "de los cuales se desea obtener el diccionario"
+#
+#    return read_list(msg)
+#
+#
+# def read_ngrams():
+#    msg = "Indique el numero mínimo y máximo de n-gramas a obtener"
+#    print(msg)
+#
+#    msg = "Mínimo: "
+#    min_ngram = read_int(msg)
+#
+#    msg = "Máximo: "
+#    max_ngram = read_int(msg)
+#
+#    return min_ngram, max_ngram
+#
+# def read_dfs():
+#    msg = "Indique los limites mínimo y máximo de frecuencias por palabra"
+#    print(msg)
+#
+#    msg = "DF Mínimo: "
+#    min_df = read_double(msg)
+#
+#    msg = "DF Máximo: "
+#    max_df = read_double(msg)
+#
+#    return min_df, max_df

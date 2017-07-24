@@ -1,12 +1,14 @@
-from dictionary import interface
-from dictionary import init_fail
+from dictionary import Interface
+from dictionary import Dictionary
 from dictionary import Offer
 from dictionary import Document
 from dictionary import Phrase
+from dictionary import YES_RESPONSES
 from sklearn.feature_extraction.text import CountVectorizer
 from dictionary import stop_spanish
+from dictionary import interface
 import gensim
-import numpy
+import curses
 
 
 def get_documents(keyspaces, feature_list):
@@ -23,8 +25,8 @@ def get_documents(keyspaces, feature_list):
                 if feature in offer.features:
                     text += offer.features[feature] + ' '
 
-            documents.append(Document(text,keyspace))
-                
+            documents.append(Document(text, keyspace))
+
     return documents
 
 
@@ -36,9 +38,9 @@ def get_phrases(documents, ngrams, dfs, dictionary):
     min_df = dfs[0]
     max_df = dfs[1]
 
-    cnt_vectorizer = CountVectorizer(stop_words = stopwords,
+    cnt_vectorizer = CountVectorizer(stop_words=stopwords,
                                      ngram_range=(min_ngrams, max_ngrams),
-                                     max_df = max_df, min_df = min_df,
+                                     max_df=max_df, min_df=min_df,
                                      )
     texts = []
     for doc in documents:
@@ -57,7 +59,7 @@ def get_comparable_phrases(terms_per_document, documents):
     for idx, doc in enumerate(terms_per_document):
         for term in doc:
             if term not in phrases:
-                #Initialize a 2 lenght list [cnt, source]
+                # Initialize a 2 lenght list [cnt, source]
                 phrases[term] = [0, documents[idx].source]
 
             # Increase cnt
@@ -78,44 +80,128 @@ def get_word2vec():
     model = gensim.models.Word2Vec.load('w2v/model')
     print(model.most_similar(positive=['excel']))
     return model
-    
-def get_similars(phrases, model):
+
+
+def remove(list1, list2):
+    new_list = [x for x in list1 if x not in list2]
+    return new_list
+
+
+def group_phrases(phrases, model):
     phrases.sort()
 
-    for idx, phrase in enumerate(phrases):
-        for next_phrase in phrases[idx:]:
-            if model.wv.similarity(phrase.phrase, next_phrase.phrase) > 0.9:
-                phrase.add_similar(next_phrase)
+    grouped_phrases = []
+    while(len(phrases) != 0):
+        current_phrase = phrases[0]
+
+        removed = []
+        removed.append(current_phrase)
+        grouped_phrases.append(current_phrase)
+
+        for comp_phrase in phrases:
+            if current_phrase != comp_phrase and \
+               model.wv.similarity(current_phrase.phrase,
+                                   comp_phrase.phrase) > 0.9:
+                current_phrase.add_similar(comp_phrase.phrase)
+
+                removed.append(comp_phrase)
+
+        phrases = remove(phrases, removed)
+
+    return grouped_phrases
+
+
+def print_similars(group_phrases, dictionary):
+    filename = dictionary.name + "_frases.csv"
+    f = open(filename, 'w')
+
+    print(len(group_phrases))
+    for phrase in group_phrases:
+        f.write(phrase.phrase + "\n")
+        for similar in phrase.similars:
+            f.write(phrase.phrase + ", " + similar + "\n")
+
+
+def ask_load_data():
+    msg = "Desea cargar un archivo de resultados?"
+    response = interface.read_boolean(msg)
+    return response
+
+
+def load_file(dictionary):
+    filename = dictionary.name + "_frases.csv"
+    file = open(filename, 'r')
+
+    phrases = {}
+    for line in file:
+        terms = line.split(',')
+        if len(terms) == 3:
+            phrase = terms[0]
+            similar = terms[1]
+            response = terms[2].strip()
+
+            if response in YES_RESPONSES:
+                response = True
+            else:
+                print("foo"+str(response)+"foo")
+                response = False
+
+            if phrase not in phrases:
+                new_phrase = Phrase(response, phrase, [similar], 0, "new_btpucp")
+                phrases[phrase] = new_phrase
+            else:
+                phrases[phrase].add_similar(similar)
+
+    for phrase in phrases:
+        dictionary.insert_phrase(phrases[phrase])
+
+
+def show_interface():
+    stdscr = curses.initscr()
+
+    stdscr.getch()
+
+    curses.endwin()
+
 
 def main():
-    # Find something better!
-    if init_fail:
-        return
+    import sys
+    sys.stderr = open('foo.err', 'w')
 
-    dictionary = interface.read_dictionary()
-    if dictionary is None:
-        return 
-    
-    # keyspaces = interface.read_keyspaces()
-    keyspaces = ['new_btpucp']
+    Dictionary.PrepareStatements()
+    interface = Interface()
+    interface.read_dictionary()
+    return
 
-    # feature_list = interface.read_features()
-    feature_list = ['Description']
+    # dictionary = dictionary.interface.read_dictionary()
+    # if dictionary is None:
+    #     return
 
-    #ngrams = interface.read_ngrams()
-    ngrams = (1,3)
+    # response = ask_load_data()
+    # if response is True:
+    #     load_file(dictionary)
+    #     return
+    #
+    # # keyspaces = interface.read_keyspaces()
+    # keyspaces = ['new_btpucp']
 
-    #dfs = interface.read_dfs()
-    dfs = (0.1,0.9)
+    # # feature_list = interface.read_features()
+    # feature_list = ['Description']
 
-    documents = get_documents(keyspaces, feature_list)
+    # #ngrams = interface.read_ngrams()
+    # ngrams = (1,3)
 
-    phrases = get_phrases(documents, ngrams, dfs, dictionary)
+    # #dfs = interface.read_dfs()
+    # dfs = (0.1,0.9)
 
-    model = get_word2vec()
+    # documents = get_documents(keyspaces, feature_list)
 
-    similars = get_similars(phrases, model)
-    #print_similars()
+    # phrases = get_phrases(documents, ngrams, dfs, dictionary)
+
+    # model = get_word2vec()
+
+    # phrases_with_similars = group_phrases(phrases, model)
+    # print_similars(phrases_with_similars, dictionary)
 
 
 if __name__ == "__main__":
