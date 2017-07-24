@@ -4,3 +4,7 @@ UNSUCCESSFUL_OPERATION = False
 SYMPLICITY_KEYSPACE = "new_btpucp"
 YES = "Si"
 NO = "No"
+CREATE_BOW = "Crear un nuevo bag of words"
+SAVE_BOW = "Guardar un bag of words revisado"
+CLOSE = "Salir"
+MODE_CHOICES = [CREATE_BOW, SAVE_BOW, CLOSE]

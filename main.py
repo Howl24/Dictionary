@@ -4,11 +4,15 @@ from dictionary import Offer
 from dictionary import Document
 from dictionary import Phrase
 from dictionary import YES_RESPONSES
+from dictionary import CREATE_BOW
+from dictionary import SAVE_BOW
+from dictionary import CLOSE
 from sklearn.feature_extraction.text import CountVectorizer
 from dictionary import stop_spanish
 from dictionary import interface
 import gensim
-import curses
+
+import sys
 
 
 def get_documents(keyspaces, feature_list):
@@ -156,22 +160,37 @@ def load_file(dictionary):
         dictionary.insert_phrase(phrases[phrase])
 
 
-def show_interface():
-    stdscr = curses.initscr()
+def create_bow(interface):
+    dic = interface.read_dictionary()
+    if not isinstance(dic, Dictionary):
+        return
 
-    stdscr.getch()
 
-    curses.endwin()
+def save_bow(interface):
+    pass
 
 
 def main():
-    import sys
     sys.stderr = open('foo.err', 'w')
 
     Dictionary.PrepareStatements()
     interface = Interface()
-    interface.read_dictionary()
+
+    mode = None
+    while (mode != CLOSE):
+        mode = interface.choose_mode()
+        if mode == CREATE_BOW:
+            create_bow(interface)
+
+        if mode == SAVE_BOW:
+            save_bow(interface)
+
     return
+    # dictionary = None
+    # while(dictionary is None):
+    #    dictionary = interface.read_dictionary()
+
+    # return
 
     # dictionary = dictionary.interface.read_dictionary()
     # if dictionary is None:
@@ -206,4 +225,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-    print("Adios!")

@@ -3,6 +3,7 @@ import curses
 from pick import pick
 from dictionary import YES
 from dictionary import NO
+from dictionary import MODE_CHOICES
 
 
 class Interface:
@@ -10,6 +11,7 @@ class Interface:
         self.stdscr = curses.initscr()
 
     def __del__(self):
+        self.stdscr.addstr(1, 1, "Pulse cualquier tecla para terminar.")
         self.stdscr.getkey()
         curses.endwin()
 
@@ -34,10 +36,14 @@ class Interface:
             response = self.read_boolean(msg)
             if response is YES:
                 dictionary = Dictionary.New(dictionary_name)
-        else:
-            self.stdscr.addstr(1, 1, "Diccionario encontrado!")
 
         return dictionary
+
+    def choose_mode(self):
+        msg = "Escoja una acción a realizar: "
+        option, index = pick(MODE_CHOICES, msg)
+        self.stdscr.clear()
+        return option
 
 # def read_string(message=""):
 #    response = input(message)
