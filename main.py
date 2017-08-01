@@ -166,12 +166,17 @@ def create_bow(interface):
     if not dic:
         return
 
-    if not dic.sources:
+    while not dic.sources:
         interface.read_configuration(dic)
+        if not interface.save_configuration(dic):
+            dic.sources = None
 
+    new_bow = interface.get_new_bow(dic)
 
 def save_bow(interface):
     pass
+
+
 
 
 def main():

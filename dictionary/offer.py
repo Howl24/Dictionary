@@ -97,6 +97,24 @@ class Offer:
             return cls.ByCassandraRows(rows)
 
     @classmethod
+    def SelectSince(cls, keyspace, date):
+        year = date[0]
+        month = date[1]
+        cls.SetKeyspace(keyspace)
+        rows = cls.session.execute(cls.select_all_stmt)
+
+        if not rows:
+            return None
+        else:
+            selected_rows = []
+            for row in rows:
+                if (row.year > year) or \
+                    ((row.year == year) and (row.month >= month)):
+                    selected_rows.append(row)
+                        
+            return cls.ByCassandraRows(selected_rows)
+
+    @classmethod
     def ByCassandraRows(cls, rows):
         offers = []
         for row in rows:

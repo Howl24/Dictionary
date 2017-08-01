@@ -1,7 +1,7 @@
 from dictionary import Dictionary
 
 def main():
-    Dictionary.CreateTable()
+    Dictionary.CreateTables()
 
 if __name__ == "__main__":
     main()

@@ -61,16 +61,19 @@ class Interface:
     def read_configuration(self, dictionary):
         sources = self.read_keyspaces()
         # Only for develop...
-        features = self.read_features(sources)
-        # features = ["Description", "Qualifications"]
+        #features = self.read_features(sources)
+        features = {"new_btpucp": {"Description", "Qualifications"}}
+
         ngrams = self.read_ngrams()
         dfs = self.read_dfs()
+        last_bow = (0,0)
 
         for source in sources:
             dictionary.add_configuration(source,
                                          features[source],
                                          ngrams,
-                                         dfs)
+                                         dfs,
+                                         last_bow)
         return dictionary
 
     def read_dfs(self):
@@ -132,7 +135,6 @@ class Interface:
         return features
 
     def read_features(self, sources):
-
         self.stdscr.addstr(1, 1, "Espere un momento...")
         self.stdscr.refresh()
         all_features = self.load_features(sources)
@@ -159,6 +161,25 @@ class Interface:
         option, index = pick(MODE_CHOICES, msg, indicator="=>")
         self.stdscr.clear()
         return option
+
+
+    def save_configuration(self, dictionary):
+        msg = "Desea guardar la configuración: "
+        response = self.read_boolean(msg)
+        if response is True:
+            dictionary.save_configuration()
+
+        return response
+
+    def get_new_bow(self, dictionary):
+        self.stdscr.addstr(1, 1, "Espere un momento...")
+        self.stdscr.refresh()
+        new_bow = dictionary.get_new_bow()
+        self.stdscr.clear()
+        self.stdscr.addstr(1, 1, "El bow ha sido exportado")
+        self.stdscr.refresh()
+        self.stdscr.getkey()
+        return new_bow
 
 # def read_string(message=""):
 #    response = input(message)
