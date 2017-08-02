@@ -9,3 +9,4 @@ SAVE_BOW = "Guardar un bag of words revisado"
 CLOSE = "Salir"
 MODE_CHOICES = [CREATE_BOW, SAVE_BOW, CLOSE]
 KEYSPACES = ["new_btpucp", "new_aptitus", "new_bumeran", "new_cas"]
+SIMILARITY_PERCENTAGE = 0.9

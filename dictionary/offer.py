@@ -1,5 +1,6 @@
 from cassandra.cluster import NoHostAvailable
 from cassandra import InvalidRequest
+from cassandra.query import BoundStatement
 import dictionary
 
 
@@ -64,7 +65,8 @@ class Offer:
 
         try:
             cls.select_stmt = cls.session.prepare(cmd_select)
-            cls.select_all_stmt = cls.session.prepare(cmd_select_all)
+            prepared_stmt = cls.session.prepare(cmd_select_all)
+            cls.select_all_stmt = BoundStatement(prepared_stmt, fetch_size=10)
         except InvalidRequest:
             print("Tabla no configurada")
             raise

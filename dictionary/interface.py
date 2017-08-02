@@ -61,8 +61,8 @@ class Interface:
     def read_configuration(self, dictionary):
         sources = self.read_keyspaces()
         # Only for develop...
-        #features = self.read_features(sources)
-        features = {"new_btpucp": {"Description", "Qualifications"}}
+        features = self.read_features(sources)
+        #features = {"new_btpucp": {"Description", "Qualifications"}}
 
         ngrams = self.read_ngrams()
         dfs = self.read_dfs()
@@ -135,6 +135,7 @@ class Interface:
         return features
 
     def read_features(self, sources):
+        self.stdscr.addstr(1, 1, "Se estan revisando los features existentes")
         self.stdscr.addstr(1, 1, "Espere un momento...")
         self.stdscr.refresh()
         all_features = self.load_features(sources)
@@ -171,15 +172,16 @@ class Interface:
 
         return response
 
-    def get_new_bow(self, dictionary):
-        self.stdscr.addstr(1, 1, "Espere un momento...")
+    def export_new_bow(self, dictionary):
+        self.stdscr.addstr(1, 1, "El bow esta siendo procesado")
+        self.stdscr.addstr(2, 1, "Espere un momento...")
         self.stdscr.refresh()
-        new_bow = dictionary.get_new_bow()
+        filename = dictionary.export_new_bow()
         self.stdscr.clear()
         self.stdscr.addstr(1, 1, "El bow ha sido exportado")
+        self.stdscr.addstr(2, 1, "                         ")
         self.stdscr.refresh()
         self.stdscr.getkey()
-        return new_bow
 
 # def read_string(message=""):
 #    response = input(message)

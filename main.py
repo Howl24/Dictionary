@@ -2,12 +2,10 @@ from dictionary import Interface
 from dictionary import Dictionary
 from dictionary import Offer
 from dictionary import Document
-from dictionary import Phrase
 from dictionary import YES_RESPONSES
 from dictionary import CREATE_BOW
 from dictionary import SAVE_BOW
 from dictionary import CLOSE
-from sklearn.feature_extraction.text import CountVectorizer
 from dictionary import stop_spanish
 from dictionary import interface
 import gensim
@@ -171,13 +169,10 @@ def create_bow(interface):
         if not interface.save_configuration(dic):
             dic.sources = None
 
-    new_bow = interface.get_new_bow(dic)
+    interface.export_new_bow(dic)
 
 def save_bow(interface):
     pass
-
-
-
 
 def main():
     file = open('foo.err', 'w')

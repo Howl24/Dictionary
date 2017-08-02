@@ -53,4 +53,12 @@ def stem(text):
   return stem_text
 
 
+def process_text(text):
+    """ Processing text:
+        - Lower case
+        - Remove whitespaces
+    """
 
+    text = text.lower()
+    text = remove_whitespaces(text)
+    return text

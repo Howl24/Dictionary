@@ -2,6 +2,7 @@ from cassandra.cluster import Cluster
 from cassandra.cluster import NoHostAvailable
 from dictionary.constants import *
 from dictionary.textprocessor import *
+from dictionary.phrase import Representative
 from dictionary.phrase import Phrase
 from dictionary.offer import Offer
 from dictionary.dictionary import Dictionary
