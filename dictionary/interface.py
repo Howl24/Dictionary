@@ -6,6 +6,7 @@ from dictionary import YES
 from dictionary import NO
 from dictionary import MODE_CHOICES
 from dictionary import KEYSPACES
+import os
 
 
 class Interface:
@@ -45,28 +46,30 @@ class Interface:
         except ValueError:
             return error_value
 
-    def read_dictionary(self):
+    def read_dictionary(self, new=True):
         msg = "Ingrese el nombre del diccionario: "
         dictionary_name = self.read_string(msg)
         dictionary = Dictionary.Select(dictionary_name)
         if dictionary is None:
-            msg = "El diccionario ingresado no existe.\n" + \
-                  "Desea crear uno nuevo?"
-            response = self.read_boolean(msg)
-            if response is True:
-                dictionary = Dictionary.New(dictionary_name)
+            if new is True:
+                msg = "El diccionario ingresado no existe.\n" + \
+                      "Desea crear uno nuevo?"
+                response = self.read_boolean(msg)
+                if response is True:
+                    dictionary = Dictionary.New(dictionary_name)
+            else:
+                self.stdscr.addstr(1, 1, "El diccionario ingresado no existe")
+                self.stdscr.getkey()
 
         return dictionary
 
     def read_configuration(self, dictionary):
         sources = self.read_keyspaces()
-        # Only for develop...
         features = self.read_features(sources)
-        #features = {"new_btpucp": {"Description", "Qualifications"}}
 
         ngrams = self.read_ngrams()
         dfs = self.read_dfs()
-        last_bow = (0,0)
+        last_bow = (0, 0)
 
         for source in sources:
             dictionary.add_configuration(source,
@@ -142,8 +145,9 @@ class Interface:
 
         selected_features = {}
         for source, features in all_features.items():
+
             msg = "Seleccione los features del keyspace: {0}".format(source)
-            options = list(features)
+            options = sorted(list(features))
             selected = pick(options,
                             msg,
                             multi_select=True,
@@ -163,7 +167,6 @@ class Interface:
         self.stdscr.clear()
         return option
 
-
     def save_configuration(self, dictionary):
         msg = "Desea guardar la configuración: "
         response = self.read_boolean(msg)
@@ -176,101 +179,36 @@ class Interface:
         self.stdscr.addstr(1, 1, "El bow esta siendo procesado")
         self.stdscr.addstr(2, 1, "Espere un momento...")
         self.stdscr.refresh()
-        filename = dictionary.export_new_bow()
+        dictionary.export_new_bow()
         self.stdscr.clear()
         self.stdscr.addstr(1, 1, "El bow ha sido exportado")
         self.stdscr.addstr(2, 1, "                         ")
         self.stdscr.refresh()
         self.stdscr.getkey()
+        self.stdscr.clear()
 
-# def read_string(message=""):
-#    response = input(message)
-#    return response
-#
-#
-# def read_boolean(message):
-#    boolean_message = message + " (S/N)"
-#    response = input(boolean_message)
-#    return response in dictionary.YES_RESPONSES
-#
-#
-# def read_int(message, error_value=None):
-#    response = input(message)
-#    try:
-#        return int(response)
-#    except ValueError:
-#        return error_value
-#
-#
-# def read_double(message, error_value=None):
-#    response = input(message)
-#    try:
-#        return float(response)
-#    except ValueError:
-#        return error_value
-#
-#
-# def read_dictionary():
-#    dictionary_name = read_string("Ingrese el nombre del diccionario: ")
-#    dictionary = Dictionary.Select(dictionary_name)
-#    if dictionary is None:
-#        print("El diccionario ingresado no existe")
-#        response = read_boolean("Desea crear un diccionario nuevo?")
-#        if response is True:
-#            dictionary = Dictionary.New(dictionary_name)
-#
-#    print()
-#    return dictionary
-#
-#
-# def read_list(msg):
-#    print(msg)
-#    responses = []
-#    keep_reading = True
-#    while(keep_reading):
-#        response = read_string()
-#        if not response:
-#            keep_reading = False
-#        else:
-#            responses.append(response)
-#
-#    return responses
-#
-#
-# def read_keyspaces():
-#    msg = "Indique los keyspaces a partir " + \
-#          "de los cuales desea construir el diccionario"
-#
-#    return read_list(msg)
-#
-#
-# def read_features():
-#    msg = "Indique los features a partir " + \
-#          "de los cuales se desea obtener el diccionario"
-#
-#    return read_list(msg)
-#
-#
-# def read_ngrams():
-#    msg = "Indique el numero mínimo y máximo de n-gramas a obtener"
-#    print(msg)
-#
-#    msg = "Mínimo: "
-#    min_ngram = read_int(msg)
-#
-#    msg = "Máximo: "
-#    max_ngram = read_int(msg)
-#
-#    return min_ngram, max_ngram
-#
-# def read_dfs():
-#    msg = "Indique los limites mínimo y máximo de frecuencias por palabra"
-#    print(msg)
-#
-#    msg = "DF Mínimo: "
-#    min_df = read_double(msg)
-#
-#    msg = "DF Máximo: "
-#    max_df = read_double(msg)
-#
-#    return min_df, max_df
+    def choose_filename(self, msg, extension):
+        filenames = [filename for filename in os.listdir() if extension in filename]
+        option, index = pick(filenames, msg, indicator="=>")
+        self.stdscr.clear()
+        return option
+
+    def import_bow(self, dictionary):
+        msg = "Seleccione el archivo con el bow que desea ingresar"
+        extension = ".csv"
+        filename = self.choose_filename(msg, extension)
+
+        # wait?
+        dictionary.import_bow(filename)
+        self.stdscr.addstr(1, 1, "El bow ha sido ingresado al diccionario")
+        self.stdscr.getkey()
+
+    def import_review(self, dictionary):
+        msg = "Seleccione el archivo con la revisión que desea ingresar"
+        extension = ".csv"
+        filename = self.choose_filename(msg, extension)
+
+        # wait?
+        dictionary.import_representative_review(filename)
+        self.stdscr.addstr(1, 1, "La revision ha sido ingresada al diccionario")
+        self.stdscr.getkey()

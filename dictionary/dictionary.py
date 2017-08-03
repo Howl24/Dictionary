@@ -8,7 +8,6 @@ from dictionary import process_text
 from sklearn.feature_extraction.text import CountVectorizer
 import dictionary
 import gensim
-import time
 
 
 class Dictionary:
@@ -16,11 +15,16 @@ class Dictionary:
     keyspace = "general"
     phrase_table_name = "new_dictionary"
     conf_table_name = "dictionary_configuration"
+    tmp_table_name = "temp_dictionary"
     insert_stmt = None
     select_stmt = None
     delete_stmt = None
     insert_conf_stmt = None
     select_conf_stmt = None
+    select_representative_stmt = None
+    insert_tmp_stmt = None
+    select_tmp_stmt = None
+    select_all_tmp_stmt = None
 
     def __init__(self, name, accepted, rejected, sources=[],
                  features={}, ngrams=None, dfs=None, last_bow=0):
@@ -52,9 +56,9 @@ class Dictionary:
     def PrepareStatements(cls):
         cmd_insert = """
                      INSERT INTO {0}
-                     (state, name, phrase, similars)
+                     (name, representative, phrase, quantity, source, state)
                      VALUES
-                     (?, ?, ?, ?);
+                     (?, ?, ?, ?, ?, ?);
                      """.format(cls.phrase_table_name)
 
         cmd_select = """
@@ -62,6 +66,11 @@ class Dictionary:
                      name = ?;
                      """.format(cls.phrase_table_name)
 
+        cmd_select_representative = """
+                                    SELECT * FROM {0} WHERE
+                                    name = ? AND
+                                    representative = ?;
+                                    """.format(cls.phrase_table_name)
         cmd_insert_conf = """
                           INSERT INTO {0}
                           (name, source, features, ngrams, dfs, last_bow)
@@ -74,19 +83,37 @@ class Dictionary:
                           name = ?;
                           """.format(cls.conf_table_name)
 
-        cmd_delete = """
-                     DELETE FROM {0} WHERE
-                     state = ? AND
-                     name = ?;
-                     """.format(cls.phrase_table_name)
+        cmd_insert_tmp = """
+                         INSERT INTO {0}
+                         (name, phrase, quantity, source, representative, state)
+                         VALUES
+                         (?, ?, ?, ?, ?, ?);
+                         """.format(cls.tmp_table_name)
+
+        cmd_select_tmp = """
+                         SELECT * FROM {0} WHERE
+                         name = ? AND
+                         phrase = ?;
+                         """.format(cls.tmp_table_name)
+
+        cmd_select_all_tmp = """
+                             SELECT * FROM {0} WHERE
+                             name = ?;
+                             """.format(cls.tmp_table_name)
+
+        cls.insert_stmt = cls.session.prepare(cmd_insert)
+        cls.select_stmt = cls.session.prepare(cmd_select)
+        cls.select_representative_stmt = cls.session.prepare(cmd_select_representative)
+
+        cls.insert_conf_stmt = cls.session.prepare(cmd_insert_conf)
+        cls.select_conf_stmt = cls.session.prepare(cmd_select_conf)
+
+        cls.insert_tmp_stmt = cls.session.prepare(cmd_insert_tmp)
+        cls.select_tmp_stmt = cls.session.prepare(cmd_select_tmp)
+        cls.select_all_tmp_stmt = cls.session.prepare(cmd_select_all_tmp)
 
         try:
-            #cls.insert_stmt = cls.session.prepare(cmd_insert)
-            cls.select_stmt = cls.session.prepare(cmd_select)
-            #cls.delete_stmt = cls.session.prepare(cmd_delete)
-
-            cls.insert_conf_stmt = cls.session.prepare(cmd_insert_conf)
-            cls.select_conf_stmt = cls.session.prepare(cmd_select_conf)
+            pass
         except InvalidRequest:
             print("Tabla no configurada.")
             print("Utilice la funcion CreateTable para crear una tabla")
@@ -104,12 +131,12 @@ class Dictionary:
         cmd_create_phrase_table = """
                CREATE TABLE IF NOT EXISTS {0} (
                name text,
-               source text,
                representative text,
-               phrases set<text>,
+               phrase set<text>,
                quantity int,
+               source text,
                state boolean,
-               PRIMARY KEY (name, source, representative));
+               PRIMARY KEY (name, representative));
                """.format(cls.phrase_table_name)
 
         cmd_create_configuration_table = """
@@ -123,8 +150,20 @@ class Dictionary:
                PRIMARY KEY (name, source));
                """.format(cls.conf_table_name)
 
+        cmd_create_tmp_table = """
+                CREATE TABLE IF NOT EXISTS {0} (
+                name            text,
+                phrase          text,
+                quantity        int,
+                source          text,
+                state           boolean,
+                representative  text,
+                PRIMARY KEY (name, phrase));
+                """.format(cls.tmp_table_name)
+
         cls.session.execute(cmd_create_phrase_table)
         cls.session.execute(cmd_create_configuration_table)
+        cls.session.execute(cmd_create_tmp_table)
 
         print("Las tablas de diccionarios se crearon correctamente")
         return dictionary.SUCCESSFUL_OPERATION
@@ -202,11 +241,6 @@ class Dictionary:
 
             self.rejected[representative].add_phrase(phrase, quantity, source)
 
-    def print(self):
-        print("Dictionary Name: " + self.name)
-        for phrase in self.accepted_phrases:
-            phrase.print()
-
     def insert_phrase(self, phrase):
         self.session.execute(self.insert_stmt,
                              (phrase.state, self.name,
@@ -222,18 +256,11 @@ class Dictionary:
                                   self.dfs,
                                   self.last_bow))
 
-    def get_bow_filename(self):
-        old_month = str(self.last_bow[0])
-        old_year = str(self.last_bow[1])
+    def get_bow_filenames(self):
+        filename_representatives = self.name + "_similares_" + ".csv"
+        filename_review = self.name + "_a_revisar.csv"
 
-        new_month = time.strftime("%m")
-        new_year = time.strftime("%Y")
-
-        filename = self.name + "_desde_" + old_month + "-" + old_year + \
-                    "__hasta__" + new_month + "-" + new_year + \
-                    "_bow.csv"
-
-        return filename
+        return filename_representatives, filename_review
 
     def export_new_bow(self):
         # Hashed by source to improve quantity update
@@ -243,7 +270,7 @@ class Dictionary:
         for source in self.sources:
             documents = []
             offers = Offer.SelectSince(source, self.last_bow)
-            print(len(offers))
+            # print(len(offers))
             features = self.features[source]
 
             for offer in offers:
@@ -259,9 +286,19 @@ class Dictionary:
         model = self.get_word2vec()
         representatives = self.get_representatives(all_phrases, model)
 
-        filename = self.get_bow_filename()
-        Representative.ExportAsCsv(representatives, filename)
+        filenames = self.get_bow_filenames()
+        Representative.ExportAsCsv(representatives, filenames[0], filenames[1])
 
+        self.save_tmp_representatives(representatives)
+
+    def save_tmp_representatives(self, representatives):
+        for rep in representatives:
+            for phrase in rep.phrases:
+                dict_name = self.name
+                self.session.execute(self.insert_tmp_stmt,
+                                     (dict_name,
+                                      phrase.name, phrase.quantity, phrase.source,
+                                      rep.name, rep.state,))
 
     @staticmethod
     def remove(list1, list2):
@@ -294,7 +331,7 @@ class Dictionary:
 
                 if model.wv.n_similarity(ws1, ws2) > dictionary.SIMILARITY_PERCENTAGE:
                     representative.add_phrase(comp_phrase.name, comp_phrase.quantity, comp_phrase.source)
-                    print(comp_phrase.name)
+                    # print(comp_phrase.name)
                     removed.append(comp_phrase)
 
             phrases = self.remove(phrases, removed)
@@ -327,7 +364,6 @@ class Dictionary:
             processed_doc = process_text(doc)
             processed_documents.append(processed_doc)
 
-        
         terms_matrix = cnt_vectorizer.fit_transform(processed_documents)
         phrase_names = cnt_vectorizer.get_feature_names()
 
@@ -359,7 +395,7 @@ class Dictionary:
     def get_old_phrases_by_source(self):
         phrases = {}
         for source in self.sources:
-            phrases[source] = [] 
+            phrases[source] = []
 
         for representative_name in self.accepted:
             representative = self.accepted[representative_name]
@@ -382,3 +418,118 @@ class Dictionary:
             phrases.append(phrase.phrase)
 
         return phrases
+
+    def import_bow(self, filename):
+        f = open(filename, 'r')
+        dict_name = self.name
+
+        wrong_lines = []
+        for idx, line in enumerate(f):
+            if idx == 0:
+                continue
+            data = line.split(',')
+
+            try:
+                rep_name = data[0].strip()
+                phrase_name = data[1].strip()
+            except:
+                wrong_lines.append(idx)
+                continue
+
+            result = self.session.execute(self.select_tmp_stmt, (dict_name, phrase_name,))
+            try:
+                row = result[0]
+            except:
+                wrong_lines.append(idx)
+                continue
+
+            self.session.execute(self.insert_tmp_stmt,
+                                 (dict_name,
+                                  row.phrase, row.quantity, row.source,
+                                  rep_name,))
+
+        for line in wrong_lines:
+            print(line)
+
+    def select_representative(self, rep_name):
+        rows = self.session.execute(self.select_representative_stmt,
+                                    (self.name, rep_name,))
+
+        representative = Representative(state=None, name=rep_name, source=None, phrases=[])
+
+        if rows:
+            for row in rows:
+                phrase = row.phrase
+                quantity = row.quantity
+
+                state = row.state
+                if state:
+                    representative.state = state
+
+                source = row.source
+                if source:
+                    representative.source = source
+
+                representative.add_phrase(phrase, quantity, source)
+
+        return representative
+
+    def insert(self, representative):
+
+        dict_name = self.name
+        rep_name = representative.name
+        state = representative.state
+
+        for phrase in representative.phrases:
+            phrase_name = phrase.name
+            quantity = phrase.quantity
+            source = phrase.source
+
+        self.session.execute(self.cmd_insert_stmt,
+                             (dict_name, source, rep_name,
+                              phrase_name, quantity, state,))
+
+    def import_representative_review(self, filename):
+        f = open(filename, 'r')
+        dict_name = self.name
+
+        rows = self.session.execute(self.select_all_tmp_stmt,
+                                    (dict_name,))
+
+        representatives = {}
+        if rows:
+            for row in rows:
+                rep_name = row.representative
+                state = row.state
+                if rep_name is None:
+                    rep_name = ""
+
+                if rep_name not in representatives:
+                    representatives[rep_name] = Representative(state, rep_name, row.source, [])
+
+                representatives[rep_name].add_phrase(row.phrase, row.quantity, row.source)
+
+        wrong_lines = []
+        for idx, line in enumerate(f):
+            if idx == 0:
+                continue
+            data = line.split(',')
+
+            try:
+                rep_name = data[0].strip()
+                state = data[1].strip()
+            except:
+                wrong_lines.append(idx)
+                continue
+
+            if state in dictionary.ACCEPT_REPRESENTATIVE_RESPONSES:
+                state = True
+            elif state in dictionary.REJECT_REPRESENTATIVE_RESPONSES:
+                state = False
+            else:
+                wrong_lines.append(idx)
+                continue
+
+            representatives[rep_name].set_state(state)
+
+        self.save_tmp_representatives(representatives.values())

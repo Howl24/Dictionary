@@ -14,7 +14,8 @@ class Phrase:
             return -1
         elif a > b:
             return 1
-        else: return 0
+        else:
+            return 0
 
     def __cmp__(self, cmp_phrase):
         if self.source == SYMPLICITY_KEYSPACE:
@@ -45,22 +46,32 @@ class Representative:
     def __init__(self, state, name, source, phrases=[]):
         self.state = state
         self.name = name
-        self.phrases = phrases
         self.source = source
+        self.phrases = phrases
 
     def add_phrase(self, name, quantity, source):
         phrase = Phrase(name, quantity, source)
-        print(phrase.name)
         self.phrases.append(phrase)
 
     @classmethod
-    def ExportAsCsv(cls, representatives, filename):
+    def ExportAsCsv(cls, representatives, filename_representatives, filename_review):
 
-        f = open(filename, 'w')
-
-        print("Representante, Frase, Aceptar?", file=f)
+        # Representatives and similar phrases
+        f_representatives = open(filename_representatives, 'w')
+        print("Representante, Frase Similar", file=f_representatives)
         for rep in representatives:
             for phrase in rep.phrases:
                 if rep.state is None:
                     state = ""
-                    print(", ".join([rep.name, phrase.name, state]), file=f)
+                    print(", ".join([rep.name, phrase.name]), file=f_representatives)
+
+        # Only representatives to review
+        f_review = open(filename_review, 'w')
+        print("Representante, Aceptar?", file=f_review)
+        for rep in representatives:
+            if rep.state is None:
+                state = ""
+                print(", ".join([rep.name, state]), file=f_review)
+
+    def set_state(self, state):
+        self.state = state
