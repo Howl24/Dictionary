@@ -19,7 +19,6 @@ def create_bow(interface):
 
     interface.export_new_bow(dic)
 
-
 def save_representatives(interface):
     dic = interface.read_dictionary(new=False)
     if not dic:

@@ -10,6 +10,8 @@ import os
 
 
 class Interface:
+    # TODO
+    # Update configuration interface
     def __init__(self):
         self.stdscr = curses.initscr()
 
@@ -47,9 +49,11 @@ class Interface:
             return error_value
 
     def read_dictionary(self, new=True):
+        # TODO
+        # Move New dictionary question out of this method.
         msg = "Ingrese el nombre del diccionario: "
         dictionary_name = self.read_string(msg)
-        dictionary = Dictionary.Select(dictionary_name)
+        dictionary = Dictionary.ByName(dictionary_name)
         if dictionary is None:
             if new is True:
                 msg = "El diccionario ingresado no existe.\n" + \

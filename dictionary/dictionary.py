@@ -11,11 +11,14 @@ import gensim
 
 
 class Dictionary:
+    # TODO
+    # Update configuration:
+
     session = None
     keyspace = "general"
-    phrase_table_name = "new_dictionary"
     conf_table_name = "dictionary_configuration"
-    tmp_table_name = "temp_dictionary"
+    phrase_table_name = "dictionary_phrases"
+    tmp_phrase_table_name = "dictionary_temp_phrases"
     insert_stmt = None
     select_stmt = None
     delete_stmt = None
@@ -26,7 +29,7 @@ class Dictionary:
     select_tmp_stmt = None
     select_all_tmp_stmt = None
 
-    def __init__(self, name, accepted, rejected, sources=[],
+    def __init__(self, name, accepted={}, rejected={}, sources=[],
                  features={}, ngrams=None, dfs=None, last_bow=0):
         self.name = name
         self.accepted = accepted
@@ -37,10 +40,18 @@ class Dictionary:
         self.dfs = dfs
         self.last_bow = last_bow
 
-    # Pre  :
-    #   - Cluster instance
-    # Post :
-    #   - Class session instantiated
+    def __str__(self):
+        txt = ""
+        txt += "Accepted: " + '\n'
+        for rep in self.accepted:
+            txt += str(self.accepted[rep]) + "\n"
+
+        txt += "Rejected: " + '\n'
+        for rep in self.rejected:
+            txt += str(self.rejected[rep]) + "\n"
+
+        return txt
+
     @classmethod
     def ConnectToDatabase(cls, cluster):
         try:
@@ -48,29 +59,26 @@ class Dictionary:
         except NoHostAvailable:
             raise
 
-    # Pre:
-    #   - Class session instance
-    # Post:
-    #   - Class PreparedStatements instantiated
     @classmethod
     def PrepareStatements(cls):
         cmd_insert = """
                      INSERT INTO {0}
-                     (name, representative, phrase, quantity, source, state)
+                     (dict_name, representative, phrase, quantity, source, state)
                      VALUES
                      (?, ?, ?, ?, ?, ?);
                      """.format(cls.phrase_table_name)
 
         cmd_select = """
                      SELECT * FROM {0} WHERE
-                     name = ?;
+                     dict_name = ?;
                      """.format(cls.phrase_table_name)
 
-        cmd_select_representative = """
-                                    SELECT * FROM {0} WHERE
-                                    name = ? AND
-                                    representative = ?;
-                                    """.format(cls.phrase_table_name)
+        # cmd_select_representative = """
+        #                             SELECT * FROM {0} WHERE
+        #                             dict_name = ? AND
+        #                             representative = ?;
+        #                             """.format(cls.phrase_table_name)
+
         cmd_insert_conf = """
                           INSERT INTO {0}
                           (name, source, features, ngrams, dfs, last_bow)
@@ -85,25 +93,25 @@ class Dictionary:
 
         cmd_insert_tmp = """
                          INSERT INTO {0}
-                         (name, phrase, quantity, source, representative, state)
+                         (dict_name, phrase, quantity, source, representative, state)
                          VALUES
                          (?, ?, ?, ?, ?, ?);
-                         """.format(cls.tmp_table_name)
+                         """.format(cls.tmp_phrase_table_name)
 
         cmd_select_tmp = """
                          SELECT * FROM {0} WHERE
-                         name = ? AND
+                         dict_name = ? AND
                          phrase = ?;
-                         """.format(cls.tmp_table_name)
+                         """.format(cls.tmp_phrase_table_name)
 
         cmd_select_all_tmp = """
                              SELECT * FROM {0} WHERE
-                             name = ?;
-                             """.format(cls.tmp_table_name)
+                             dict_name = ?;
+                             """.format(cls.tmp_phrase_table_name)
 
         cls.insert_stmt = cls.session.prepare(cmd_insert)
         cls.select_stmt = cls.session.prepare(cmd_select)
-        cls.select_representative_stmt = cls.session.prepare(cmd_select_representative)
+        # cls.select_representative_stmt = cls.session.prepare(cmd_select_representative)
 
         cls.insert_conf_stmt = cls.session.prepare(cmd_insert_conf)
         cls.select_conf_stmt = cls.session.prepare(cmd_select_conf)
@@ -122,124 +130,130 @@ class Dictionary:
 
         return dictionary.SUCCESSFUL_OPERATION
 
-    # Pre:
-    #   - Class session instancej
-    # Post:
-    #   - Dictionary DB_Table created
     @classmethod
     def CreateTables(cls):
-        cmd_create_phrase_table = """
-               CREATE TABLE IF NOT EXISTS {0} (
-               name text,
-               representative text,
-               phrase set<text>,
-               quantity int,
-               source text,
-               state boolean,
-               PRIMARY KEY (name, representative));
-               """.format(cls.phrase_table_name)
-
         cmd_create_configuration_table = """
-               CREATE TABLE IF NOT EXISTS {0} (
-               name         text,
-               source       text,
-               features     set<text>,
-               ngrams       tuple<int, int>,
-               dfs          tuple<double, double>,
-               last_bow     tuple<int, int>,
-               PRIMARY KEY (name, source));
-               """.format(cls.conf_table_name)
+            CREATE TABLE IF NOT EXISTS {0} (
+            name         text,
+            source       text,
+            features     set<text>,
+            ngrams       tuple<int, int>,
+            dfs          tuple<double, double>,
+            last_bow     tuple<int, int>,
+            PRIMARY KEY (name, source));
+            """.format(cls.conf_table_name)
 
-        cmd_create_tmp_table = """
-                CREATE TABLE IF NOT EXISTS {0} (
-                name            text,
-                phrase          text,
-                quantity        int,
-                source          text,
-                state           boolean,
-                representative  text,
-                PRIMARY KEY (name, phrase));
-                """.format(cls.tmp_table_name)
+        cmd_create_phrase_table = """
+            CREATE TABLE IF NOT EXISTS {0} (
+            dict_name        text,
+            phrase           text,
+            quantity         int,
+            source           text,
+            state            boolean,
+            representative   text,
+            PRIMARY KEY (dict_name, phrase));
+            """.format(cls.phrase_table_name)
+
+        cmd_create_tmp_phrase_table = """
+            CREATE TABLE IF NOT EXISTS {0} (
+            dict_name            text,
+            phrase          text,
+            quantity        int,
+            source          text,
+            state           boolean,
+            representative  text,
+            PRIMARY KEY (dict_name, phrase));
+            """.format(cls.tmp_phrase_table_name)
 
         cls.session.execute(cmd_create_phrase_table)
         cls.session.execute(cmd_create_configuration_table)
-        cls.session.execute(cmd_create_tmp_table)
+        cls.session.execute(cmd_create_tmp_phrase_table)
 
         print("Las tablas de diccionarios se crearon correctamente")
         return dictionary.SUCCESSFUL_OPERATION
 
     @classmethod
-    def Select(cls, dictionary_name):
+    def ByName(cls, dictionary_name):
         """Return a dictionary from database"""
 
-        configuration = cls.session.execute(cls.select_conf_stmt,
-                                            (dictionary_name,))
+        configuration_rows = cls.session.execute(cls.select_conf_stmt,
+                                                 (dictionary_name,))
 
-        rows = cls.session.execute(cls.select_stmt,
-                                   (dictionary_name,))
+        phrase_rows = cls.session.execute(cls.select_stmt,
+                                          (dictionary_name,))
 
-        if not configuration:
+        if not configuration_rows:
             return None
         else:
-            if not rows:
-                rows = []
+            if not phrase_rows:
+                phrase_rows = []
 
-            return Dictionary.FromCassandra(dictionary_name,
-                                            configuration,
-                                            rows)
+            return Dictionary.ByCassandraRows(dictionary_name,
+                                              configuration_rows,
+                                              phrase_rows)
 
     @classmethod
     def New(cls, dictionary_name):
         name = dictionary_name
-        accepted_phrases = []
-        rejected_phrases = []
-        return cls(name, accepted_phrases, rejected_phrases)
+        return cls(name)
 
     @classmethod
-    def FromCassandra(cls, dictionary_name, configuration, phrases):
-
-        dictionary = Dictionary.New(dictionary_name)
+    def ByCassandraRows(cls, dictionary_name, configuration_rows, phrase_rows):
+        dictionary = Dictionary(dictionary_name)
 
         # Add dictionary configuration
-        for result in configuration:
-            source = result.source
-            features = result.features
-            ngrams = result.ngrams
-            dfs = result.dfs
-            last_bow = result.last_bow
+        for row in configuration_rows:
+            source = row.source
+            features = row.features
+            ngrams = row.ngrams
+            dfs = row.dfs
+            last_bow = row.last_bow
             dictionary.add_configuration(source, features, ngrams, dfs, last_bow)
 
         # Add dictionary phrases
-        for result in phrases:
-            source = result.source
-            representative = result.representative
-            phrase = result.phrase
-            quantity = result.quantity
-            state = result.state
-            dictionary.add_phrase(source, representative, phrase, quantity, state)
+        for row in phrase_rows:
+            phrase = row.phrase
+            quantity = row.quantity
+            source = row.source
+            representative = row.representative
+            state = row.state
+            dictionary.add_phrase(phrase, quantity, source, representative, state)
 
         return dictionary
 
     def add_configuration(self, source, features, ngrams, dfs, last_bow):
         """Add source to container and map features"""
+        # TODO
+        # last_bow by source.
+        # Ngrams and Dfs  by source
+
         self.sources.append(source)
         self.features[source] = features
         self.ngrams = ngrams
         self.dfs = dfs
         self.last_bow = last_bow
 
-    def add_phrase(self, source, representative, phrase, quantity, state):
+    def add_phrase(self, name, quantity, source, representative_name, state):
+        # TODO
+        # Add unreview representatives (state = None)
+        # Validate different representatives states (in different phrases)
+        # Modify dictionary class structure to get unique representatives.
+        #   reps = {} <- Reps by name
+        #   accepted & rejected = [] <- Pointers to reps
+        # Explicitly sending an empty phrase list (Remove after import-bow bug fix).
+        #   Representative(representative_name, state, [] <--)
+
         if state is True:
-            if representative not in self.accepted:
-                self.accepted[representative] = Representative(state, representative, source)
+            if representative_name not in self.accepted:
+                self.accepted[representative_name] = Representative(representative_name, state, [])
 
-            self.accepted[representative].add_phrase(phrase, quantity, source)
+            self.accepted[representative_name].add_phrase(name, quantity, source, state)
 
-        else:
-            if representative not in self.rejected:
-                self.rejected[representative] = Representative(state, representative, source)
+        if state is False:
+            if representative_name not in self.rejected:
+                self.rejected[representative_name] = Representative(representative_name, state, [])
 
-            self.rejected[representative].add_phrase(phrase, quantity, source)
+            self.rejected[representative_name].add_phrase(name, quantity, source, state)
 
     def insert_phrase(self, phrase):
         self.session.execute(self.insert_stmt,
@@ -270,7 +284,6 @@ class Dictionary:
         for source in self.sources:
             documents = []
             offers = Offer.SelectSince(source, self.last_bow)
-            # print(len(offers))
             features = self.features[source]
 
             for offer in offers:
@@ -285,6 +298,10 @@ class Dictionary:
 
         model = self.get_word2vec()
         representatives = self.get_representatives(all_phrases, model)
+
+        for rep in representatives:
+            print(rep)
+        return
 
         filenames = self.get_bow_filenames()
         Representative.ExportAsCsv(representatives, filenames[0], filenames[1])
@@ -316,10 +333,9 @@ class Dictionary:
             removed = []
 
             rep_name = current_phrase.name
-            source = current_phrase.source
-            state = None
+            state = current_phrase.state
 
-            representative = Representative(state, rep_name, source, [])
+            representative = Representative(rep_name, state, [])
 
             # print()
             # print("Representative: " + representative.name)
@@ -329,8 +345,17 @@ class Dictionary:
                 ws1 = representative.name.split()
                 ws2 = comp_phrase.name.split()
 
-                if model.wv.n_similarity(ws1, ws2) > dictionary.SIMILARITY_PERCENTAGE:
-                    representative.add_phrase(comp_phrase.name, comp_phrase.quantity, comp_phrase.source)
+                try:
+                    similarity = model.wv.n_similarity(ws1, ws2)
+                except KeyError:
+                    if ws1 == ws2:
+                        similarity = 1
+                    else:
+                        similarity = 0
+
+                if similarity > dictionary.SIMILARITY_PERCENTAGE:
+                    representative.add_phrase(comp_phrase.name, comp_phrase.quantity,
+                                              comp_phrase.source, comp_phrase.state)
                     # print(comp_phrase.name)
                     removed.append(comp_phrase)
 
@@ -386,7 +411,8 @@ class Dictionary:
             for idx_phrase, name in enumerate(phrase_names):
                 quantity = terms_matrix[idx_doc, idx_phrase]
                 if name not in phrases:
-                    phrases[name] = Phrase(name, quantity, source)
+                    state = None
+                    phrases[name] = Phrase(name, quantity, source, state)
 
                 phrases[name].add_quantity(quantity)
 
