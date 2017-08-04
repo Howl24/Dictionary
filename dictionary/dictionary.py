@@ -61,13 +61,6 @@ class Dictionary:
 
     @classmethod
     def PrepareStatements(cls):
-        cmd_insert = """
-                     INSERT INTO {0}
-                     (dict_name, representative, phrase, quantity, source, state)
-                     VALUES
-                     (?, ?, ?, ?, ?, ?);
-                     """.format(cls.phrase_table_name)
-
         cmd_select = """
                      SELECT * FROM {0} WHERE
                      dict_name = ?;
@@ -90,6 +83,13 @@ class Dictionary:
                           SELECT * FROM {0} WHERE
                           name = ?;
                           """.format(cls.conf_table_name)
+
+        cmd_insert = """
+                     INSERT INTO {0}
+                     (dict_name, phrase, quantity, source, representative, state)
+                     VALUES
+                     (?, ?, ?, ?, ?, ?);
+                     """.format(cls.phrase_table_name)
 
         cmd_insert_tmp = """
                          INSERT INTO {0}
@@ -299,23 +299,21 @@ class Dictionary:
         model = self.get_word2vec()
         representatives = self.get_representatives(all_phrases, model)
 
-        for rep in representatives:
-            print(rep)
-        return
-
         filenames = self.get_bow_filenames()
         Representative.ExportAsCsv(representatives, filenames[0], filenames[1])
 
-        self.save_tmp_representatives(representatives)
+        self.save_tmp_phrases(representatives)
 
-    def save_tmp_representatives(self, representatives):
+    def save_tmp_phrases(self, representatives):
+        # TODO
+        # Check necessity to remove previous tmp phrases
         for rep in representatives:
             for phrase in rep.phrases:
                 dict_name = self.name
                 self.session.execute(self.insert_tmp_stmt,
                                      (dict_name,
                                       phrase.name, phrase.quantity, phrase.source,
-                                      rep.name, rep.state,))
+                                      rep.name, phrase.state,))
 
     @staticmethod
     def remove(list1, list2):
@@ -446,8 +444,36 @@ class Dictionary:
         return phrases
 
     def import_bow(self, filename):
+        # TODO
+        # Add error file
+        # Validate representative phrase existence (Rep.name in rep.phrases)
         f = open(filename, 'r')
         dict_name = self.name
+
+        # Read representatives by name
+        representatives = {}
+        result = self.session.execute(self.select_all_tmp_stmt, (dict_name,))
+        if result:
+            for row in result:
+                rep_name = row.representative
+                if rep_name not in representatives:
+                    representatives[rep_name] = Representative(rep_name, None, [])
+
+                rep = representatives[rep_name]
+                rep.add_phrase(row.phrase, row.quantity, row.source, row.state)
+                # Validation!
+                if row.phrase == rep.name:
+                    rep.set_state(row.state)
+
+        
+        # Load representatives
+        for rep_name in representatives:
+            rep = representatives[rep_name]
+            for phrase in rep.phrases:
+                self.session.execute(self.insert_stmt,
+                                     (dict_name,
+                                      phrase.name, phrase.quantity, phrase.source,
+                                      rep.name, rep.state,))
 
         wrong_lines = []
         for idx, line in enumerate(f):
@@ -462,20 +488,25 @@ class Dictionary:
                 wrong_lines.append(idx)
                 continue
 
-            result = self.session.execute(self.select_tmp_stmt, (dict_name, phrase_name,))
-            try:
-                row = result[0]
-            except:
+            # representative not found in temp table
+            if rep_name not in representatives:
+                representatives[rep_name] = Representative(rep_name, None, [])
+
+            rep = representatives[rep_name]
+            phrase = rep.find_phrase(phrase_name)
+
+            if not phrase:
                 wrong_lines.append(idx)
-                continue
+            else:
+                self.session.execute(self.insert_stmt,
+                                     (dict_name,
+                                      phrase.name, phrase.quantity, phrase.source,
+                                      rep.name, rep.state))
 
-            self.session.execute(self.insert_tmp_stmt,
-                                 (dict_name,
-                                  row.phrase, row.quantity, row.source,
-                                  rep_name,))
-
-        for line in wrong_lines:
-            print(line)
+        if wrong_lines:
+            print("Wrong Lines:")
+            for line in wrong_lines:
+                print(line)
 
     def select_representative(self, rep_name):
         rows = self.session.execute(self.select_representative_stmt,
@@ -516,24 +547,26 @@ class Dictionary:
                               phrase_name, quantity, state,))
 
     def import_representative_review(self, filename):
+        # TODO 
+        # Validate representative phrase existence (Rep.name in rep.phrases)
         f = open(filename, 'r')
         dict_name = self.name
 
-        rows = self.session.execute(self.select_all_tmp_stmt,
+        rows = self.session.execute(self.select_stmt,
                                     (dict_name,))
 
         representatives = {}
         if rows:
             for row in rows:
                 rep_name = row.representative
-                state = row.state
-                if rep_name is None:
-                    rep_name = ""
 
                 if rep_name not in representatives:
-                    representatives[rep_name] = Representative(state, rep_name, row.source, [])
-
-                representatives[rep_name].add_phrase(row.phrase, row.quantity, row.source)
+                    representatives[rep_name] = Representative(rep_name, None, [])
+                rep = representatives[rep_name]
+                rep.add_phrase(row.phrase, row.quantity, row.source, row.state)
+                # Validation!
+                if row.phrase == rep.name:
+                    rep.set_state(row.state)
 
         wrong_lines = []
         for idx, line in enumerate(f):
@@ -558,4 +591,10 @@ class Dictionary:
 
             representatives[rep_name].set_state(state)
 
-        self.save_tmp_representatives(representatives.values())
+        for rep_name in representatives:
+            rep = representatives[rep_name]
+            for phrase in rep.phrases:
+                self.session.execute(self.insert_stmt,
+                                     (dict_name,
+                                      phrase.name, phrase.quantity, phrase.source,
+                                      rep.name, rep.state,))

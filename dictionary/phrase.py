@@ -52,6 +52,10 @@ class Representative:
         phrase = Phrase(name, quantity, source, state)
         self.phrases.append(phrase)
 
+    def find_phrase(self, name):
+        for phrase in self.phrases:
+            if phrase.name == name:
+                return phrase
 
     def __str__(self):
         lines = []
@@ -69,7 +73,7 @@ class Representative:
         print("Representante, Frase Similar", file=f_representatives)
         for rep in representatives:
             for phrase in rep.phrases:
-                if rep.state is None:
+                if rep.state is None or phrase.state is None:
                     state = ""
                     print(", ".join([rep.name, phrase.name]), file=f_representatives)
 
