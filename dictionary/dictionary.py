@@ -452,6 +452,7 @@ class Dictionary:
 
         # Read representatives by name
         representatives = {}
+        phrases = {}
         result = self.session.execute(self.select_all_tmp_stmt, (dict_name,))
         if result:
             for row in result:
@@ -460,7 +461,8 @@ class Dictionary:
                     representatives[rep_name] = Representative(rep_name, None, [])
 
                 rep = representatives[rep_name]
-                rep.add_phrase(row.phrase, row.quantity, row.source, row.state)
+                phrases[row.phrase] = rep.add_phrase(row.phrase, row.quantity, row.source, row.state)
+
                 # Validation!
                 if row.phrase == rep.name:
                     rep.set_state(row.state)
@@ -491,13 +493,21 @@ class Dictionary:
             # representative not found in temp table
             if rep_name not in representatives:
                 representatives[rep_name] = Representative(rep_name, None, [])
+                rep = representatives[rep_name]
+                phrase = phrases[phrase_name]
+                rep.add_phrase(phrase.name, phrase.quantity, phrase.source, phrase.state)
 
+            
             rep = representatives[rep_name]
             phrase = rep.find_phrase(phrase_name)
 
             if not phrase:
-                wrong_lines.append(idx)
-            else:
+                phrase = phrases[phrase_name]
+                # Not in temp table
+                if not phrase:
+                    wrong_lines.append(idx)
+                    continue
+
                 self.session.execute(self.insert_stmt,
                                      (dict_name,
                                       phrase.name, phrase.quantity, phrase.source,
@@ -547,7 +557,7 @@ class Dictionary:
                               phrase_name, quantity, state,))
 
     def import_representative_review(self, filename):
-        # TODO 
+        # TODO rn
         # Validate representative phrase existence (Rep.name in rep.phrases)
         f = open(filename, 'r')
         dict_name = self.name
@@ -589,7 +599,11 @@ class Dictionary:
                 wrong_lines.append(idx)
                 continue
 
-            representatives[rep_name].set_state(state)
+            try:
+                representatives[rep_name].set_state(state)
+            except:
+                wrong_lines.append(idx)
+                continue
 
         for rep_name in representatives:
             rep = representatives[rep_name]

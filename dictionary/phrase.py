@@ -51,6 +51,7 @@ class Representative:
     def add_phrase(self, name, quantity, source, state):
         phrase = Phrase(name, quantity, source, state)
         self.phrases.append(phrase)
+        return phrase
 
     def find_phrase(self, name):
         for phrase in self.phrases:
@@ -75,7 +76,7 @@ class Representative:
             for phrase in rep.phrases:
                 if rep.state is None or phrase.state is None:
                     state = ""
-                    print(", ".join([rep.name, phrase.name]), file=f_representatives)
+                    print(", ".join(["'"+rep.name+"'", "'" + phrase.name+"'"]), file=f_representatives)
 
         # Only representatives to review
         f_review = open(filename_review, 'w')
@@ -83,7 +84,7 @@ class Representative:
         for rep in representatives:
             if rep.state is None:
                 state = ""
-                print(", ".join([rep.name, state]), file=f_review)
+                print(", ".join(["'" +rep.name + "'", state]), file=f_review)
 
     def set_state(self, state):
         self.state = state
