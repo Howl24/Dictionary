@@ -2,7 +2,7 @@ from dictionary import SYMPLICITY_KEYSPACE
 
 
 class Phrase:
-    def __init__(self, name, quantity, source, state=None):
+    def __init__(self, name, quantity, source, state):
         self.name = name
         self.quantity = quantity
         self.source = source
@@ -43,15 +43,27 @@ class Phrase:
 
 
 class Representative:
-    def __init__(self, state, name, source, phrases=[]):
-        self.state = state
+    def __init__(self, name, state, phrases=[]):
         self.name = name
-        self.source = source
+        self.state = state
         self.phrases = phrases
 
-    def add_phrase(self, name, quantity, source):
-        phrase = Phrase(name, quantity, source)
+    def add_phrase(self, name, quantity, source, state):
+        phrase = Phrase(name, quantity, source, state)
         self.phrases.append(phrase)
+
+    def find_phrase(self, name):
+        for phrase in self.phrases:
+            if phrase.name == name:
+                return phrase
+
+    def __str__(self):
+        lines = []
+        lines.append("Representative: " + self.name)
+        for phrase in self.phrases:
+            lines.append(str(phrase))
+
+        return "\n".join(lines)
 
     @classmethod
     def ExportAsCsv(cls, representatives, filename_representatives, filename_review):
@@ -61,7 +73,7 @@ class Representative:
         print("Representante, Frase Similar", file=f_representatives)
         for rep in representatives:
             for phrase in rep.phrases:
-                if rep.state is None:
+                if rep.state is None or phrase.state is None:
                     state = ""
                     print(", ".join([rep.name, phrase.name]), file=f_representatives)
 
